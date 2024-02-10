@@ -19,6 +19,7 @@ fenics-pulse==2023.2.0
 fonttools==4.48.1
     # via matplotlib
 h5py==3.9.0
+--no-binary=h5py
     # via
     #   ciucci-2024 (pyproject.toml)
     #   fenics-pulse
