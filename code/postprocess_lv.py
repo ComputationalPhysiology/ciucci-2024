@@ -72,6 +72,7 @@ def load_lv_arrs(data_path, output, gammas, pressures, mesh_folder: Path = Path(
 
 
 def postprocess_lv(resultsdir, figdir, mesh_folder, print_stats=False, create_paraview=False):
+    print("Postprocessing LV")
     output = Path(resultsdir) / "results.xdmf"
 
     gammas = np.load(resultsdir / "gammas.npy")
@@ -174,6 +175,7 @@ def postprocess_lv(resultsdir, figdir, mesh_folder, print_stats=False, create_pa
 
 
 def create_paraview_files(resultsdir, figdir, mesh_folder: Path = Path("meshes/lv")):
+    print("Creating Paraview files")
     gammas = np.load(resultsdir / "gammas.npy")
     output = Path(resultsdir) / "results.xdmf"
     pvd_output = Path(figdir) / "pvd_files"
@@ -190,7 +192,7 @@ def create_paraview_files(resultsdir, figdir, mesh_folder: Path = Path("meshes/l
 
     with dolfin.XDMFFile(output.as_posix()) as xdmf:
         for ti in range(len(gammas)):
-            print(ti)
+            # print(ti)
             xdmf.read_checkpoint(u, "u", ti)
 
             for i, name in enumerate(

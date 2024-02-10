@@ -8,6 +8,11 @@ on:
       branches:
         - main
 
+env:
+  # `BASE_URL` determines the website is served from, including CSS & JS assets
+  # You may need to change this to `BASE_URL: ''`
+  BASE_URL: /${{ github.event.repository.name }}
+
 jobs:
 
   reproduce_results:
@@ -35,7 +40,6 @@ jobs:
         with:
           name: figures
           path: "./report/figures"
-
 
       - name: Install myst-cli
         run: npm install -g mystmd

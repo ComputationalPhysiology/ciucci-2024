@@ -21,6 +21,7 @@ def create_arrays(
     key2title,
     is_twitch=False,
 ):
+    print("Creating arrays")
     R = geo.mesh.coordinates().max(0)[-1]
     L = geo.mesh.coordinates().max(0)[0]
 
@@ -56,15 +57,15 @@ def create_arrays(
 
     for idx, (key, resultsdir) in enumerate(resultsdirs.items()):
         output = Path(resultsdir) / "results.xdmf"
-        print(output)
+        # print(output)
         plots[key] = {}
 
         with dolfin.XDMFFile(output.as_posix()) as f:
             for i in range(N):
-                print("Timepoint", i + 1, "of", N, "for", key, "with gamma", gamma[i])
+                # print("Timepoint", i + 1, "of", N, "for", key, "with gamma", gamma[i])
 
                 for name, func in funcs.items():
-                    print(name)
+                    # print(name)
 
                     f.read_checkpoint(func, name, i)
 
@@ -105,7 +106,7 @@ def create_arrays(
                                     np.sqrt(point**2 - y**2),
                                     -np.sqrt(point**2 - y**2),
                                 ]:
-                                    print(point, y, z, np.sqrt(y**2 + z**2))
+                                    # print(point, y, z, np.sqrt(y**2 + z**2))
                                     data_points.append(
                                         {
                                             "name": name,
@@ -132,6 +133,7 @@ def create_arrays(
 
 
 def plot_points_in_slice(data_file, figdir):
+    print("Plotting points in slice")
     df = pd.read_csv(data_file)
 
     for i, name in enumerate(
@@ -194,6 +196,7 @@ def plot_points_in_slice(data_file, figdir):
 
 
 def plot_stress(data_file, figdir):
+    print("Plotting stress")
     df = pd.read_csv(data_file)
     max_df = df[np.isclose(df["gamma"], df["gamma"].max())]
     stress_df = max_df[max_df["name"].isin(["sigma_ff", "sigma_r", "sigma_c"])]
@@ -217,7 +220,6 @@ def plot_stress(data_file, figdir):
     fig.savefig(figdir / "stress.png")  # , dpi=500)
 
     stress_dev_df = max_df[max_df["name"].isin(["sigma_dev_ff", "sigma_dev_r", "sigma_dev_c", "p"])]
-    # sns.set(font_scale=2)
     plt.rcParams.update({"font.size": 16})
     fig = plt.figure()
     ax = sns.barplot(
@@ -273,53 +275,8 @@ def plot_stress(data_file, figdir):
     plt.close(fig)
 
 
-# def postprocess_stress(
-#     resultsdirs,
-#     key2title,
-#     mesh_folder="meshes-cylinder",
-#     figdir="figures-cylinder",
-#     plot_slice=False,
-# ):
-#     geo = get_cylinder_geometry(mesh_folder=mesh_folder)
-#     figdir = Path(figdir)
-#     figdir.mkdir(exist_ok=True, parents=True)
-
-#     fst = next(iter(resultsdirs.values()))
-#     t = np.load(Path(fst) / "t.npy")
-#     gamma = np.load(Path(fst) / "gamma.npy")
-
-#     R = geo.mesh.coordinates().max(0)[-1]
-#     disk = dolfin.UnitDiscMesh.create(dolfin.MPI.comm_world, 50, 1, 2)
-#     disk.coordinates()[:] *= R
-#     V_disk = dolfin.FunctionSpace(disk, "CG", 1)
-
-#     data_file = figdir / "data.csv"
-#     data_file_points = figdir / "data_points.csv"
-#     plot_file = figdir / "plots.npy"
-#     if not data_file.exists():
-#         create_arrays(
-#             resultsdirs=resultsdirs,
-#             gamma=gamma,
-#             figdir=figdir,
-#             plot_slice=plot_slice,
-#             geo=geo,
-#             key2title=key2title,
-#             data_file=data_file,
-#             data_file_points=data_file_points,
-#             plot_file=plot_file,
-#             V_disk=V_disk,
-#         )
-
-#     # data_arrs = np.load(arr_path, allow_pickle=True).item()
-#     # arrs_std = data_arrs["arrs_std"]
-#     # arrs_avg = data_arrs["arrs_avg"]
-#     plot_stress(data_file, figdir)
-#     # plot_slices(V_disk, plot_file, figdir)
-#     plot_relevant_slices(V_disk, plot_file, figdir)
-#     plot_points_in_slice(data_file_points, figdir)
-
-
 def load_displacement(geo, resultsdirs, data_path, key2title):
+    print("Loading displacement")
     R = geo.mesh.coordinates().max(0)[-1]
     L = geo.mesh.coordinates().max(0)[0]
 
@@ -337,7 +294,7 @@ def load_displacement(geo, resultsdirs, data_path, key2title):
     data = []
     for idx, (key, resultsdir) in enumerate(resultsdirs.items()):
         output = Path(resultsdir) / "results.xdmf"
-        print(output)
+        # print(output)
 
         with dolfin.XDMFFile(output.as_posix()) as f:
             for i in range(N):
@@ -375,6 +332,7 @@ def postprocess_disp(
     data_path,
     figdir="figures-cylinder",
 ):
+    print("Postprocessing displacement")
     df = pd.read_csv(data_path)
     df_rc = df[df["time_point"].isin([0, 1])]
     df_c = df_rc[df_rc["time_point"] == 1]
@@ -484,6 +442,7 @@ def _plot_twitch_single(
     palette=None,
     errorbar=None,
 ):
+    print(f"Plotting {ylabel}")
     fig = plt.figure(figsize=(8, 8))
     ax = sns.lineplot(
         data=df,
@@ -515,6 +474,7 @@ def postprocess_twitch_disp(
     t: np.ndarray,
     figdir="figures-cylinder",
 ):
+    print("Postprocessing twitch displacement")
     figdir = Path(figdir)
     figdir.mkdir(exist_ok=True, parents=True)
 
@@ -654,6 +614,7 @@ def postprocess_cylinder(
     mesh_folder="meshes-cylinder",
     figdir="figures-cylinder",
 ):
+    print("Postprocessing cylinder")
     springs = [3000, 100, 10000]
 
     resultsdirs = {spring: f"{resultsdir.as_posix()}/spring{spring}" for spring in springs}
@@ -705,6 +666,7 @@ def postprocess_cylinder_twitch(
     mesh_folder="meshes-cylinder",
     figdir="figures-cylinder",
 ):
+    print("Postprocessing cylinder twitch")
     geo = get_cylinder_geometry(mesh_folder=mesh_folder)
     figdir = Path(figdir)
     figdir.mkdir(exist_ok=True, parents=True)

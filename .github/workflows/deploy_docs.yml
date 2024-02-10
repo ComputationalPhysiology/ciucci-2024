@@ -15,6 +15,11 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
+env:
+  # `BASE_URL` determines the website is served from, including CSS & JS assets
+  # You may need to change this to `BASE_URL: ''`
+  BASE_URL: /${{ github.event.repository.name }}
+
 jobs:
   build-docs:
     uses: ./.github/workflows/build_docs.yml
