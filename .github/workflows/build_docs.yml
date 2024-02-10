@@ -38,7 +38,7 @@ jobs:
 
 
       - name: Install myst-cli
-        run: npm install -g myst-cli
+        run: npm install -g mystmd
 
       - name: Build static html
         run: myst build --html
