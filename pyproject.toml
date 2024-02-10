@@ -56,6 +56,12 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
+
+
+]
+
+extend-exclude = [
+    "code/create_paraview_figure.py"
 ]
 
 # Same as Black.
