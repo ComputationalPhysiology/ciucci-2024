@@ -1,0 +1,47 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Build docs
+
+on:
+    workflow_dispatch:
+    workflow_call:
+    pull_request:
+      branches:
+        - main
+
+
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      PUBLISH_DIR: ./_build/html
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Download docs artifact
+        # docs artifact is uploaded by build-docs job
+        uses: actions/download-artifact@v4
+        with:
+          name: figures
+          path: "./report/figures"
+
+
+      - name: Install myst-cli
+        run: npm install -g myst-cli
+
+      - name: Build static html
+        run: myst build --html
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: ${{ env.PUBLISH_DIR }}
