@@ -37,6 +37,8 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
+            ~/.cache/instant
+            ~/.cache/dijitso
             ~/.cache/pip
           key: cache_v1
           restore-keys: |
@@ -54,6 +56,20 @@ jobs:
       - name: Postprocess cylinder
         run: cd code && python3 main.py postprocess-cylinder -i meshes/cylinder -r results/cylinder -o figures/cylinder
 
+      - name: Run cylinder twitch simulation
+        run: cd code && python3 main.py run-cylinder-twitch -i meshes/cylinder -o results/cylinder-twitch
+
+      - name: Postprocess cylinder twitch
+        run: cd code && python3 main.py postprocess-cylinder-twitch -i meshes/cylinder -r results/cylinder-twitch -o figures/cylinder-twitch
+
+      - name: Run pre-processing lv
+        run: cd code && python3 main.py preprocess-lv -o meshes/lv  --psize-ref 3.0
+
+      - name: Run lv simulation
+        run: cd code && python3 main.py run-lv -i meshes/lv -o results/lv
+
+      - name: Postprocess lv
+        run: cd code && python3 main.py postprocess-lv -i meshes/lv -r results/lv -o figures/lv
 
       - name: Upload artifact
         if: always()
