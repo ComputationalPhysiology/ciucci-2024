@@ -31,6 +31,7 @@ class SmoothLV(dolfin.UserExpression):
 
 
 def load_lv_arrs(data_path, output, gammas, pressures, mesh_folder: Path = Path("meshes/lv")):
+    print("Loading LV arrays")
     geo = get_lv_geometry(mesh_folder=mesh_folder)
     V_DG2 = dolfin.FunctionSpace(geo.mesh, "DG", 2)
 
