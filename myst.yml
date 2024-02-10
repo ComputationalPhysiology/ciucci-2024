@@ -5,7 +5,7 @@ project:
   # description:
   keywords: []
   authors: []
-  github: https://github.com/finsberg/contracting-cylinder
+  github: https://github.com/ComputationalPhysiology/ciucci-2024
   # bibliography: []
 site:
   template: book-theme

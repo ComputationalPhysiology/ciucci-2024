@@ -5,6 +5,12 @@ This repository contains the source code to reproduce the modeling results from 
 
 
 
+## Reproducible results
+You can find a report of the results by going to the repository homepage at <https://computationalphysiology.github.io/ciucci-2024/myst/report-1>.
+
+Note that the results displayed here are re-generated every time a push is make to the repository (see https://github.com/ComputationalPhysiology/ciucci-2024/actions/workflows/deploy_docs.yml). Note that all figures are also uploaded as artifacts during the build.
+
+
 ## Install dependencies
 To run the code in this repo you need FEniCS and gmsh with OpenCascade installed. The easiest way to do this, is to use the [following docker image](https://github.com/scientificcomputing/packages/pkgs/container/fenics-gmsh).
 Next, you need to install the requirements,
@@ -42,7 +48,7 @@ python3 main.py postprocess-lv -i meshes/lv -r results/lv/ -o figures/lv --creat
 
 ### Preprocessing
 ```
-python3 main.py preprocess-cylinder -o meshes/cylinder -c 500
+python3 main.py preprocess-cylinder -o meshes/cylinder
 ```
 
 ### Simulation
