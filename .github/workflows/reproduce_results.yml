@@ -1,32 +1,20 @@
 # Simple workflow for deploying static content to GitHub Pages
 name: Reproduce results
 
-on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
 
-    # Allows you to run this workflow manually from the Actions tab
+on:
   workflow_dispatch:
   workflow_call:
-
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  run:
+  reproduce-results:
     runs-on: ubuntu-22.04
 
     container:
       image: ghcr.io/scientificcomputing/fenics-gmsh:2023-11-15
-
-
-
-    env:
-      # Directory that will be published on github pages
-      DATAPATH: ./artifacts/data/data.json
-      FIGDIR: ./artifacts/figures
-      RESULTDIR: ./artifacts/results
-
 
     steps:
       - uses: actions/checkout@v4

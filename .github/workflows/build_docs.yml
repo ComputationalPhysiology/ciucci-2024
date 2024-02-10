@@ -8,11 +8,14 @@ on:
       branches:
         - main
 
-
-
-
 jobs:
-  build:
+
+  reproduce_results:
+    uses: ./.github/workflows/reproduce_results.yml
+
+  build-docs:
+    needs: [reproduce_results]
+
     runs-on: ubuntu-latest
     env:
       PUBLISH_DIR: ./_build/html
