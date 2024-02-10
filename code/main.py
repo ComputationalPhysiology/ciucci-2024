@@ -147,11 +147,6 @@ def add_postprocess_cylinder_arguments(parser: argparse.ArgumentParser) -> None:
         type=Path,
         default=Path.cwd().parent / "figures-cylinder",
     )
-    parser.add_argument(
-        "--plot-slice",
-        action="store_true",
-        help="Plot a slice of the cylinder",
-    )
 
 
 def add_postprocess_cylinder_twitch_arguments(parser: argparse.ArgumentParser) -> None:
