@@ -13,6 +13,7 @@ dependencies = [
     "matplotlib",
     "fenics-pulse",
     "seaborn",
+    "polars",
 ]
 
 

@@ -26,19 +26,45 @@ python3 main.py run-lv -i meshes/lv -o results/lv
 ```
 
 ### Postprocessing
-TBW
-
+```
+python3 main.py postprocess-lv -i meshes/lv -r results/lv/ -o figures/lv
+```
+Get stats using
+```
+python3 main.py postprocess-lv -i meshes/lv -r results/lv/ -o figures/lv --print-stats
+```
+Create paraview files with stresses imposed on deformed geometry
+```
+python3 main.py postprocess-lv -i meshes/lv -r results/lv/ -o figures/lv --create-paraview
+```
 
 ## Cylinder
 
 ### Preprocessing
 ```
+python3 main.py preprocess-cylinder -o meshes/cylinder -c 500
 ```
 
 ### Simulation
 ```
 python3 main.py run-cylinder -i meshes/cylinder -o results/cylinder
 ```
+
+### Simulation (twitch)
+```
+python3 main.py run-cylinder-twitch -i meshes/cylinder -o results/cylinder-twitch
+```
+
+### Postprocessing
+```
+python3 main.py postprocess-cylinder -i meshes/cylinder -r results/cylinder -o figures/cylinder
+```
+
+### Postprocessing (twitch)
+```
+python3 main.py postprocess-cylinder-twitch -i meshes/cylinder -r results/cylinder-twitch -o figures/cylinder-twitch
+```
+
 
 
 ## Citation

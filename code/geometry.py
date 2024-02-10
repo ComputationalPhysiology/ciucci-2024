@@ -77,9 +77,16 @@ def preprocess_lv(
     )
 
 
+def get_lv_geometry(mesh_folder: Path = Path("meshes/lv")):
+    if not mesh_folder.is_dir():
+        raise FileNotFoundError(f"Folder {mesh_folder} does not exist")
+
+    return cardiac_geometries.geometry.Geometry.from_folder(mesh_folder)
+
+
 class Geometry(typing.NamedTuple):
     mesh: dolfin.Mesh
-    markers: dict[str, tuple[int, int]]
+    markers: dict[str, list[int]]
     marker_functions: pulse.MarkerFunctions
     rad0: dolfin.Function
     circ0: dolfin.Function
@@ -226,7 +233,7 @@ def preprocess_cylinder(
     )
 
 
-def load_cylinder_geometry(mesh_folder: Path) -> Geometry:
+def get_cylinder_geometry(mesh_folder: Path) -> Geometry:
     triangle_mesh_name = mesh_folder / "triangle_mesh.xdmf"
     tetra_mesh_name = mesh_folder / "mesh.xdmf"
     marker_name = mesh_folder / "markers.json"

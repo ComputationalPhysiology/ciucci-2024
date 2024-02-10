@@ -62,6 +62,8 @@ pandas==2.2.0
     #   seaborn
 pillow==10.2.0
     # via matplotlib
+polars==0.20.7
+    # via ciucci-2024 (pyproject.toml)
 pygments==2.17.2
     # via rich
 pyparsing==3.1.1

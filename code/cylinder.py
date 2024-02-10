@@ -5,10 +5,9 @@ import numpy as np
 import ufl_legacy as ufl
 
 
-from geometry import load_cylinder_geometry
-from utils import Projector
+from geometry import get_cylinder_geometry
+from utils import Projector, ca_transient
 
-# import postprocess
 
 dolfin.parameters["form_compiler"]["quadrature_degree"] = 6
 dolfin.parameters["form_compiler"]["cpp_optimize"] = True
@@ -18,24 +17,7 @@ dolfin.parameters["form_compiler"]["optimize"] = True
 m2um = 1e6
 
 
-def ca_transient(t, tstart=0.05, ca_ampl=0.3):
-    tau1 = 0.05
-    tau2 = 0.110
-
-    ca_diast = 0.0
-
-    beta = (tau1 / tau2) ** (-1 / (tau1 / tau2 - 1)) - (tau1 / tau2) ** (-1 / (1 - tau2 / tau1))
-    ca = np.zeros_like(t)
-
-    ca[t <= tstart] = ca_diast
-
-    ca[t > tstart] = (ca_ampl - ca_diast) / beta * (
-        np.exp(-(t[t > tstart] - tstart) / tau1) - np.exp(-(t[t > tstart] - tstart) / tau2)
-    ) + ca_diast
-    return ca
-
-
-def main(
+def run(
     output_folder="results",
     mesh_folder=Path("meshes/cylinder"),
     spring=3000.0,
@@ -54,7 +36,7 @@ def main(
     output.unlink(missing_ok=True)
     output.with_suffix(".h5").unlink(missing_ok=True)
 
-    geo = load_cylinder_geometry(mesh_folder=mesh_folder)._asdict()
+    geo = get_cylinder_geometry(mesh_folder=mesh_folder)._asdict()
 
     microstructure = pulse.Microstructure(
         f0=dolfin.as_vector([1.0, 0.0, 0.0]),
@@ -135,8 +117,6 @@ def main(
 
     def save(U, p, ti):
         F = ufl.variable(pulse.kinematics.DeformationGradient(U))
-        J = ufl.variable(ufl.det(F))
-
         sigma = material.CauchyStress(F, p)
         sigma_iso = sigma - (1 / 3) * ufl.tr(sigma) * ufl.Identity(3)
         E = pulse.kinematics.GreenLagrangeStrain(F)
@@ -256,179 +236,96 @@ def main(
 
     if not np.isclose(target_preload, 0.0):
         pulse.iterate.iterate(problem, preload, target_preload, initial_number_of_steps=20)
-
-    save(*problem.state.split(), 0.0)
+    u, p = problem.state.split()
+    save(u, p, 0.0)
     for i, (ti, g) in enumerate(zip(t, gamma_arr)):
         pulse.iterate.iterate(problem, gamma, g, initial_number_of_steps=20)
-        save(*problem.state.split(), ti)
+        u, p = problem.state.split()
+        save(u, p, ti)
 
 
-def effect_of_spring(
-    main_resultdir,
-    main_figdir="figures2",
-    datadir="meshes/cylinder_fine2",
+def main(
+    output_folder,
+    mesh_folder="meshes-cylinder",
     varying_gamma=True,
     amp=0.2,
 ):
-    springs = [3000.0, 100.0, 10000.0]
+    springs = [3000, 100, 10000]
 
-    subfolder = "cylinder_fine_varying_incomp" if varying_gamma else "cylinder_fine_incomp"
-    resultdirs = {
-        spring: f"{main_resultdir.as_posix()}/{subfolder}/spring{spring}" for spring in springs
-    }
+    output_folders = {spring: f"{output_folder.as_posix()}/spring{spring}" for spring in springs}
     for spring in springs:
         print("Spring : ", spring)
-        if Path(resultdirs[spring]).is_dir():
+        if Path(output_folders[spring]).is_dir():
             continue
         run(
-            resultsdir=resultdirs[spring],
+            output_folder=output_folders[spring],
             spring=spring,
-            datadir=datadir,
+            mesh_folder=mesh_folder,
             varying_gamma=varying_gamma,
             amp=amp,
         )
 
-    def key2title(k):
-        if np.isclose(k, 100.0):
-            return "Unloaded\n$k$ = 0.1 Pa/\u03BCm"
-        elif np.isclose(k, 3000.0):
-            return "Standard load\n$k$ = 1 Pa/\u03BCm"
-        elif np.isclose(k, 10000.0):
-            return "Increased load\n$k$ = 10 Pa/\u03BCm"
+    # def key2title(k):
+    #     if np.isclose(k, 100.0):
+    #         return "Unloaded\n$k$ = 0.1 Pa/\u03BCm"
+    #     elif np.isclose(k, 3000.0):
+    #         return "Standard load\n$k$ = 1 Pa/\u03BCm"
+    #     elif np.isclose(k, 10000.0):
+    #         return "Increased load\n$k$ = 10 Pa/\u03BCm"
 
-    subfigdir = "cylinder_fine_varying_incomp" if varying_gamma else "cylinder_fine_incomp"
-    figdir = f"{main_figdir}/{subfigdir}"
+    # subfigdir = (
+    #     "cylinder_fine_varying_incomp" if varying_gamma else "cylinder_fine_incomp"
+    # )
+    # figdir = f"{main_figdir}/{subfigdir}"
 
-    postprocess.postprocess_stress(
-        resultdirs=resultdirs,
-        figdir=figdir,
-        key2title=key2title,
-        datadir=datadir,
-        plot_slice=True,
-    )
-    postprocess.postprocess_disp(
-        resultdirs=resultdirs,
-        figdir=figdir,
-        key2title=key2title,
-        datadir=datadir,
-    )
+    # postprocess.postprocess_stress(
+    #     resultdirs=resultdirs,
+    #     figdir=figdir,
+    #     key2title=key2title,
+    #     datadir=datadir,
+    #     plot_slice=True,
+    # )
+    # postprocess.postprocess_disp(
+    #     resultdirs=resultdirs,
+    #     figdir=figdir,
+    #     key2title=key2title,
+    #     datadir=datadir,
+    # )
 
 
-def run_compressiblity(main_resultdir):
-    kappas = [1, 10, 1e2, 1e3, 1e4]
-    resultdirs = {kappa: f"{main_resultdir.as_posix()}/kappa{kappa}" for kappa in kappas}
-    for kappa in kappas:
+def main_twitch(
+    output_folder: Path,
+    mesh_folder="meshes/cylinder_fine2",
+    amp=0.2,
+    spring: float = 3000.0,
+    varying_gamma=False,
+):
+    if not output_folder.is_dir():
         run(
-            resultsdir=resultdirs[kappa],
-            overwrite=True,
-            datadir="meshes/cylin",
-            kappa=kappa,
+            output_folder=output_folder,
+            mesh_folder=mesh_folder,
+            varying_gamma=varying_gamma,
+            twitch=True,
+            spring=spring,
+            amp=amp,
         )
 
-    key2title = lambda kappa: "incomp" if kappa is None else rf"$\kappa = {kappa:.0f}$"
-    postprocess.postprocess_stress(
-        resultdirs=resultdirs, figdir="figures/cylinder/incomp", key2title=key2title
-    )
-    postprocess.postprocess_disp(
-        resultdirs=resultdirs, figdir="figures/cylinder/incomp", key2title=key2title
-    )
+        # subfigdir = (
+        #     "cylinder_fine_varying_incomp_twitch"
+        #     if varying_gamma
+        #     else "cylinder_fine_incomp_twitch"
+        # )
+        # figdir = f"{main_figdir}/{subfigdir}"
 
-
-def run_basic_with_preload(main_resultdir):
-    preloads = [0.0, 0.1, 0.5, 1.0, 1.5]
-    resultdirs = {preload: f"{main_resultdir.as_posix()}/preload_{preload}" for preload in preloads}
-    for preload in preloads:
-        run(
-            resultsdir=resultdirs[preload],
-            datadir="meshes/cylin",
-            overwrite=True,
-            target_preload=preload,
-        )
-
-    key2title = lambda preload: rf"$F = {preload:.3f}$"
-    postprocess.postprocess_stress(
-        resultdirs=resultdirs, figdir="figures/cylinder/preload", key2title=key2title
-    )
-    postprocess.postprocess_disp(
-        resultdirs=resultdirs, figdir="figures/cylinder/preload", key2title=key2title
-    )
-
-
-def run_twitch(main_resultdir, main_figdir="figures2", datadir="meshes/cylinder_fine2", amp=0.2):
-    for varying_gamma in [False, True]:
-        resultsdir = (
-            main_resultdir / "cylinder_fine_varying_incomp" / "twitch"
-            if varying_gamma
-            else main_resultdir / "cylinder_fine_incomp" / "twitch"
-        )
-
-        if not resultsdir.is_dir():
-            run(
-                resultsdir=resultsdir,
-                datadir=datadir,
-                varying_gamma=varying_gamma,
-                twitch=True,
-                amp=amp,
-            )
-
-        subfigdir = (
-            "cylinder_fine_varying_incomp_twitch"
-            if varying_gamma
-            else "cylinder_fine_incomp_twitch"
-        )
-        figdir = f"{main_figdir}/{subfigdir}"
-
-        postprocess.postprocess_twitch_disp(
-            resultdirs={0: resultsdir},
-            figdir=figdir,
-            key2title=lambda x: str(x),
-            datadir=datadir,
-        )
-        postprocess.postprocess_twitch_stress(
-            resultdirs={0: resultsdir},
-            figdir=figdir,
-            key2title=lambda x: str(x),
-            datadir=datadir,
-        )
-
-
-# def main():
-#     # main_resultdir = Path("results/cylinder")
-#     # main_resultdir.mkdir(exist_ok=True, parents=True)
-#     # # run_basic_with_preload(main_resultdir)
-#     # effect_of_spring(main_resultdir)
-#     # # run_compressiblity(main_resultdir)
-
-#     # main_resultdir = Path("results/cylinder_varying_incomp")
-#     # main_resultdir.mkdir(exist_ok=True, parents=True)
-#     # run_basic_with_preload(main_resultdir)
-
-#     main_resultdir = Path("results4")
-#     main_resultdir.mkdir(exist_ok=True, parents=True)
-#     effect_of_spring(main_resultdir, main_figdir="figures4", varying_gamma=False)
-#     effect_of_spring(main_resultdir, main_figdir="figures4", varying_gamma=True)
-#     run_twitch(main_resultdir, main_figdir="figures4")
-
-#     main_resultdir = Path("results5")
-#     main_resultdir.mkdir(exist_ok=True, parents=True)
-#     effect_of_spring(
-#         main_resultdir, main_figdir="figures5", varying_gamma=False, amp=0.25
-#     )
-#     effect_of_spring(
-#         main_resultdir, main_figdir="figures5", varying_gamma=True, amp=0.25
-#     )
-#     run_twitch(main_resultdir, main_figdir="figures5", amp=0.25)
-
-#     main_resultdir = Path("results6")
-#     main_resultdir.mkdir(exist_ok=True, parents=True)
-#     effect_of_spring(
-#         main_resultdir, main_figdir="figures6", varying_gamma=False, amp=0.3
-#     )
-#     effect_of_spring(
-#         main_resultdir, main_figdir="figures6", varying_gamma=True, amp=0.3
-#     )
-#     run_twitch(main_resultdir, main_figdir="figures6", amp=0.3)
-
-
-# if __name__ == "__main__":
-#     main()
+        # postprocess.postprocess_twitch_disp(
+        #     resultdirs={0: resultsdir},
+        #     figdir=figdir,
+        #     key2title=lambda x: str(x),
+        #     datadir=datadir,
+        # )
+        # postprocess.postprocess_twitch_stress(
+        #     resultdirs={0: resultsdir},
+        #     figdir=figdir,
+        #     key2title=lambda x: str(x),
+        #     datadir=datadir,
+        # )

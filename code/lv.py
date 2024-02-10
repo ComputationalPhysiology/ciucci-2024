@@ -1,229 +1,19 @@
 import dolfin
-import cardiac_geometries
 from pathlib import Path
 
 import pulse
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
 
 import numpy as np
 import ufl_legacy as ufl
 import utils
+
+from geometry import get_lv_geometry
 
 
 dolfin.parameters["form_compiler"]["quadrature_degree"] = 6
 dolfin.parameters["form_compiler"]["cpp_optimize"] = True
 dolfin.parameters["form_compiler"]["representation"] = "uflacs"
 dolfin.parameters["form_compiler"]["optimize"] = True
-
-
-def try_except_runtimererror(func, values, args):
-    try:
-        values.append(func(*args))
-    except RuntimeError:
-        pass
-
-
-class SmoothLV(dolfin.UserExpression):
-    def __init__(self, f):
-        self.f = f
-        super().__init__()
-
-    def eval(self, value, x):
-        dx = 0.05
-        values = [self.f(x[0], x[1], x[2])]
-
-        for i in [-2, -1, 1, 2]:
-            try_except_runtimererror(self.f, values, (x[0] + i * dx, x[1], x[2]))
-            try_except_runtimererror(self.f, values, (x[0], x[1] + i * dx, x[2]))
-            try_except_runtimererror(self.f, values, (x[0], x[1], x[2] + i * dx))
-
-        value[0] = np.mean(values)
-
-    def value_shape(self):
-        return ()
-
-
-def get_geometry(mesh_folder: Path = Path("meshes/lv")):
-    if not mesh_folder.is_dir():
-        raise FileNotFoundError(f"Folder {mesh_folder} does not exist")
-
-    return cardiac_geometries.geometry.Geometry.from_folder(mesh_folder)
-
-
-def load_arrs(data_path, output, gammas, pressures, mesh_folder: Path = Path("meshes/lv")):
-    geo = get_geometry(mesh_folder=mesh_folder)
-    V_DG1 = dolfin.FunctionSpace(geo.mesh, "DG", 1)
-
-    f = dolfin.Function(V_DG1)
-    from postprocess import name2latex
-
-    data = []
-    with dolfin.XDMFFile(output.as_posix()) as xdmf:
-        for ti in range(len(gammas)):
-            # xdmf.read_checkpoint(u, "u", ti)
-            for name in [
-                "sigma_ff",
-                "sigma_ss",
-                "sigma_nn",
-                "sigma_dev_ff",
-                "sigma_dev_ss",
-                "sigma_dev_nn",
-                "E_ff",
-                "E_ss",
-                "E_nn",
-                "p",
-            ]:
-                xdmf.read_checkpoint(f, name, ti)
-                f_arr = f.vector().get_local()
-
-                data.extend(
-                    [
-                        {
-                            "name": name,
-                            "value": fi,
-                            "gamma": gammas[ti],
-                            "pressure": pressures[ti],
-                            "latex": name2latex(name),
-                        }
-                        for fi in f_arr
-                    ]
-                )
-    df = pd.DataFrame(data)
-    df.to_csv(data_path)
-
-
-def postprocess(resultsdir, figdir, print_stats=False):
-    output = Path(resultsdir) / "results.xdmf"
-
-    gammas = np.load(resultsdir / "gammas.npy")
-    pressures = np.load(resultsdir / "pressures.npy")
-
-    figdir.mkdir(exist_ok=True, parents=True)
-
-    data_path = resultsdir / "results.csv"
-    if not data_path.is_file():
-        load_arrs(data_path, output, gammas, pressures)
-
-    if print_stats:
-        import polars as pl
-
-        df = pl.read_csv(data_path)
-        unloaded = df.filter(pl.col("pressure").eq(0.0)).filter(pl.col("gamma").eq(0.2))
-        loaded = df.filter(pl.col("pressure").eq(15.0)).filter(pl.col("gamma").eq(0.2))
-
-        print(unloaded.group_by("name").agg(pl.col("*").mean()))
-        print(loaded.group_by("name").agg(pl.col("*").mean()))
-
-        return
-
-    df = pd.read_csv(data_path)
-
-    target_gamma = 0.2
-    df_unloaded = df[np.isclose(df["pressure"], 0.0) & np.isclose(df["gamma"], target_gamma)]
-    df_unloaded = df_unloaded.assign(label="Unloaded systole\nESP = 0 kPa")
-
-    traget_pressure = 15.0
-    df_loaded = df[
-        np.isclose(df["pressure"], traget_pressure) & np.isclose(df["gamma"], target_gamma)
-    ]
-    df_loaded = df_loaded.assign(label="Standard systole\nESP = 15 kPa")
-    df1 = pd.concat([df_loaded, df_unloaded])
-
-    df1_dev_stress = df1[df1["name"].isin(["sigma_dev_ff", "sigma_dev_ss", "sigma_dev_nn", "p"])]
-    plt.rcParams.update({"font.size": 16})
-    fig = plt.figure()
-
-    ax = sns.barplot(
-        data=df1_dev_stress,
-        x="label",
-        y="value",
-        hue="latex",
-        errorbar="ci",
-        alpha=0.7,
-    )
-    ax.get_legend().set_title(None)
-    ax.set_xlabel("")
-    ax.set_ylabel("Average stress [kPa]")
-    ax.grid()
-    fig.tight_layout()
-    fig.savefig(figdir / "stress_dev.svg")  # type: ignore
-    plt.close(fig)
-
-    df1_stress = df1[df1["name"].isin(["sigma_ff", "sigma_ss", "sigma_nn"])]
-    plt.rcParams.update({"font.size": 16})
-    fig = plt.figure()
-
-    ax = sns.barplot(
-        data=df1_stress,
-        x="label",
-        y="value",
-        hue="latex",
-        errorbar="ci",
-        alpha=0.7,
-    )
-    ax.get_legend().set_title(None)
-    ax.set_xlabel("")
-    ax.set_ylabel("Average stress [kPa]")
-    ax.grid()
-    fig.tight_layout()
-    fig.savefig(figdir / "stress.svg")  # type: ignore
-    plt.close(fig)
-
-    df1_strain = df1[df1["name"].isin(["E_ff", "E_ss", "E_nn"])]
-    fig = plt.figure()
-    ax = sns.barplot(
-        data=df1_strain,
-        x="label",
-        y="value",
-        hue="latex",
-        alpha=0.7,
-    )
-    sns.move_legend(ax, "lower center", bbox_to_anchor=(0.5, 1), ncol=3, title=None, frameon=False)
-    ax.set_xlabel("")
-    ax.set_ylabel("Average strain")
-    ax.grid()
-    fig.savefig(figdir / "strain.svg")  # type: ignore
-    plt.close(fig)
-
-
-def create_paraview_files(resultsdir, mesh_folder: Path = Path("meshes/lv")):
-    gammas = np.load(resultsdir / "gammas.npy")
-    output = Path(resultsdir) / "results.xdmf"
-    pvd_output = Path(resultsdir) / "pvd_files"
-    pvd_output.mkdir(exist_ok=True, parents=True)
-    geo = get_geometry(mesh_folder=mesh_folder)
-
-    V_DG1 = dolfin.FunctionSpace(geo.mesh, "DG", 1)
-    V_CG2 = dolfin.VectorFunctionSpace(geo.mesh, "CG", 2)
-    V_CG1 = dolfin.FunctionSpace(geo.mesh, "CG", 1)
-
-    u = dolfin.Function(V_CG2)
-    u.rename("u", "")
-    f = dolfin.Function(V_DG1)
-
-    with dolfin.XDMFFile(output.as_posix()) as xdmf:
-        for ti in range(len(gammas)):
-            print(ti)
-            xdmf.read_checkpoint(u, "u", ti)
-
-            for i, name in enumerate(
-                [
-                    "sigma_ff",
-                    "sigma_ss",
-                    "sigma_nn",
-                ],
-            ):
-                xdmf.read_checkpoint(f, name, ti)
-                f_int = dolfin.interpolate(SmoothLV(f), V_CG1)
-                f_int.rename(name, "")
-                with dolfin.XDMFFile((pvd_output / f"{name}_{ti}.xdmf").as_posix()) as xdmf2:
-                    xdmf2.parameters["functions_share_mesh"] = True
-                    xdmf2.parameters["flush_output"] = True
-
-                    xdmf2.write(u, ti)
-                    xdmf2.write(f_int, ti)
 
 
 def main(output_folder, mesh_folder: Path = Path("meshes/lv")):
@@ -234,23 +24,23 @@ def main(output_folder, mesh_folder: Path = Path("meshes/lv")):
         print(f"Output {output} already exists")
         return
 
-    geo = get_geometry(mesh_folder=mesh_folder)
+    geo = get_lv_geometry(mesh_folder=mesh_folder)
 
-    V_DG1 = dolfin.FunctionSpace(geo.mesh, "DG", 2)
-    proj = utils.Projector(V_DG1)
-    sigma_ff = dolfin.Function(V_DG1)
-    sigma_ss = dolfin.Function(V_DG1)
-    sigma_nn = dolfin.Function(V_DG1)
+    V_DG2 = dolfin.FunctionSpace(geo.mesh, "DG", 2)
+    proj = utils.Projector(V_DG2)
+    sigma_ff = dolfin.Function(V_DG2)
+    sigma_ss = dolfin.Function(V_DG2)
+    sigma_nn = dolfin.Function(V_DG2)
 
-    sigma_dev_ff = dolfin.Function(V_DG1)
-    sigma_dev_ss = dolfin.Function(V_DG1)
-    sigma_dev_nn = dolfin.Function(V_DG1)
+    sigma_dev_ff = dolfin.Function(V_DG2)
+    sigma_dev_ss = dolfin.Function(V_DG2)
+    sigma_dev_nn = dolfin.Function(V_DG2)
 
-    E_ff = dolfin.Function(V_DG1)
-    E_ss = dolfin.Function(V_DG1)
-    E_nn = dolfin.Function(V_DG1)
+    E_ff = dolfin.Function(V_DG2)
+    E_ss = dolfin.Function(V_DG2)
+    E_nn = dolfin.Function(V_DG2)
 
-    von_Mises = dolfin.Function(V_DG1)
+    von_Mises = dolfin.Function(V_DG2)
 
     microstructure = pulse.Microstructure(f0=geo.f0, s0=geo.s0, n0=geo.n0)
 
@@ -331,7 +121,6 @@ def main(output_folder, mesh_folder: Path = Path("meshes/lv")):
         u, p = problem.state.split()
 
         F = pulse.kinematics.DeformationGradient(u)
-        J = ufl.det(F)
         sigma = material.CauchyStress(F, p)
         sigma_dev = sigma - (1 / 3) * ufl.tr(sigma) * ufl.Identity(3)
         E = pulse.kinematics.GreenLagrangeStrain(F)
@@ -439,12 +228,3 @@ def main(output_folder, mesh_folder: Path = Path("meshes/lv")):
                 encoding=dolfin.XDMFFile.Encoding.HDF5,
                 append=True,
             )
-
-
-if __name__ == "__main__":
-    resultsdir = Path("results/lv_incomp")
-    resultsdir.mkdir(exist_ok=True, parents=True)
-    # main(resultsdir=resultsdir)
-    figdir = Path("figures") / "lv_incomp"
-    postprocess(resultsdir=resultsdir, figdir=figdir, print_stats=False)
-    # create_paraview_files(resultsdir=resultsdir)
