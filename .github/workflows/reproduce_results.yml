@@ -1,0 +1,63 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Reproduce results
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+    # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  workflow_call:
+
+
+jobs:
+  run:
+    runs-on: ubuntu-22.04
+
+    container:
+      image: ghcr.io/scientificcomputing/fenics-gmsh:2023-11-15
+
+
+
+    env:
+      # Directory that will be published on github pages
+      DATAPATH: ./artifacts/data/data.json
+      FIGDIR: ./artifacts/figures
+      RESULTDIR: ./artifacts/results
+
+
+    steps:
+      - uses: actions/checkout@v4
+
+
+      - name: Cache
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+          key: cache_v1
+          restore-keys: |
+            cache_v1
+
+      - name: Install dependencies
+        run: python3 -m pip install -r requirements.txt
+
+      - name: Run pre-processing cylinder
+        run: cd code && python3 main.py preprocess-cylinder -o meshes/cylinder -c 500
+
+      - name: Run cylinder simulation
+        run: cd code && python3 main.py run-cylinder -i meshes/cylinder -o results/cylinder
+
+      - name: Postprocess cylinder
+        run: cd code && python3 main.py postprocess-cylinder -i meshes/cylinder -r results/cylinder -o figures/cylinder
+
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          path: ./code/figures
+          if-no-files-found: error
