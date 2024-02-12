@@ -38,7 +38,9 @@ def main(filename, min_value, max_value, name, label, blocknr, figure_folder):
     extractBlock.Selectors = [f"/Root/Block{blocknr}"]
 
     # show data in view
-    extractBlockDisplay = Show(extractBlock, renderView1, "UnstructuredGridRepresentation")
+    extractBlockDisplay = Show(
+        extractBlock, renderView1, "UnstructuredGridRepresentation"
+    )
 
     # get color transfer function/color map for 'sigma_xx'
     sigma_xxLUT = GetColorTransferFunction(name)
@@ -360,20 +362,3 @@ if __name__ == "__main__":
         blocknr=int(args.blocknr),
         figure_folder=args.figure_folder,
     )
-
-    # main(
-    #     filename="/Users/finsberg/local/src/cardiac-cancer/code/results4/cylinder_fine_varying_incomp/spring3000.0/results.xdmf",
-    #     min_value=0.0,
-    #     max_value=3.0,
-    #     name=name,
-    #     label="$\\sigma_{xx}$",
-    # )
-
-    # main(
-    #     filename="/Users/finsberg/local/src/cardiac-cancer/code/results4/cylinder_fine_incomp/spring3000.0/results.xdmf",
-    #     min_value=0.0,
-    #     max_value=3.0,
-    #     name="sigma_r",
-    #     label="$\\sigma_{xx}$",
-    #     blocknr=1,
-    # )

@@ -26,7 +26,7 @@ def main(output_folder, mesh_folder: Path = Path("meshes/lv")):
 
     geo = get_lv_geometry(mesh_folder=mesh_folder)
 
-    V_DG2 = dolfin.FunctionSpace(geo.mesh, "DG", 2)
+    V_DG2 = dolfin.FunctionSpace(geo.mesh, "DG", 1)
     proj = utils.Projector(V_DG2)
     sigma_ff = dolfin.Function(V_DG2)
     sigma_ss = dolfin.Function(V_DG2)

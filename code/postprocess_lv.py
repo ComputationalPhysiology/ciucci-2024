@@ -33,9 +33,11 @@ class SmoothLV(dolfin.UserExpression):
 def load_lv_arrs(data_path, output, gammas, pressures, mesh_folder: Path = Path("meshes/lv")):
     print("Loading LV arrays")
     geo = get_lv_geometry(mesh_folder=mesh_folder)
-    V_DG2 = dolfin.FunctionSpace(geo.mesh, "DG", 2)
+    V_DG2 = dolfin.FunctionSpace(geo.mesh, "DG", 1)
+    V_CG1 = dolfin.FunctionSpace(geo.mesh, "CG", 1)
 
-    f = dolfin.Function(V_DG2)
+    f_ = dolfin.Function(V_DG2)
+    p = dolfin.Function(V_CG1)
 
     data = []
     with dolfin.XDMFFile(output.as_posix()) as xdmf:
@@ -53,6 +55,7 @@ def load_lv_arrs(data_path, output, gammas, pressures, mesh_folder: Path = Path(
                 "E_nn",
                 "p",
             ]:
+                f = p if name == "p" else f_
                 xdmf.read_checkpoint(f, name, ti)
                 f_arr = f.vector().get_local()
 
