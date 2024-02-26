@@ -3,11 +3,9 @@ from pathlib import Path
 
 
 results_folder_tmp = (
-    "/Users/finsberg/local/src/ciucci-2024/code/results/cylinder_{varying_str}/spring3000.0"
+    "/Users/finsberg/local/src/ciucci-2024/code/results/cylinder{varying_str}/spring3000"
 )
-figure_folder_tmp = (
-    "/Users/finsberg/local/src/ciucci-2024/figures/cylinder_{varying_str}/spring3000.0"
-)
+figure_folder_tmp = "/Users/finsberg/local/src/ciucci-2024/figures/cylinder{varying_str}/spring3000"
 
 
 def create_uniform_gamma_figures():
@@ -70,7 +68,7 @@ def create_varing_gamma_figures():
         (-0.3, 0.0, "E_xx", "$E_{xx}$", 7),
         (0.0, 0.2, "E_r", "$E_{r}$", 8),
         (0.0, 0.2, "E_c", "$E_{c}$", 9),
-        (-2.0, 1.0, "hydrostatic", "$p$", 10),
+        (-1.5, 1.0, "hydrostatic", "$p$", 10),
     ]:
         print(name)
 
@@ -97,7 +95,7 @@ def create_varing_gamma_figures():
 
 
 def main():
-    # create_uniform_gamma_figures()
+    create_uniform_gamma_figures()
     create_varing_gamma_figures()
 
 

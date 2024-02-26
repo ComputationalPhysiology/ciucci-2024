@@ -194,6 +194,32 @@ def plot_points_in_slice(data_file, figdir):
     fig.savefig(figdir / "p_points.png")
     fig.savefig(figdir / "p_points.svg")
 
+    df_p_std = df_plot[df_plot["key"] == 3000.0]
+    fig = plt.figure()
+    ax = sns.barplot(
+        data=df_p_std,
+        x="point",
+        y="value",
+        hue="point",
+        alpha=0.7,
+        errorbar="ci",
+        palette="viridis",
+        legend=False,
+    )
+
+    N = 5
+    xticks = np.linspace(0, len(df_p_std["point"].unique()), N)
+    xticklabels = np.linspace(0, df_p_std["point_end"].max(), N)
+    ax.set_xticks(xticks)
+    ax.set_xticklabels([f"{x:.2f}" for x in xticklabels])
+    ax.set_xlabel("Radius")
+
+    ax.grid()
+    ax.set_ylabel("$p$ [kPa]")
+    fig.tight_layout()
+    fig.savefig(figdir / "p_points_std_load.png")
+    fig.savefig(figdir / "p_points_std_load.svg")
+
 
 def plot_stress(data_file, figdir):
     print("Plotting stress")

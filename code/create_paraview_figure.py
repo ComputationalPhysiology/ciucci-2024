@@ -268,6 +268,88 @@ def main(filename, min_value, max_value, name, label, blocknr, figure_folder):
     # update the view to ensure updated data information
     renderView1.Update()
 
+    # create a new 'Clip'
+    clip3 = Clip(registrationName="Clip3", Input=clip2)
+    clip3.ClipType = "Plane"
+    clip3.HyperTreeGridClipper = "Plane"
+    clip3.Scalars = ["POINTS", name]
+    clip3.Value = 2.0714892148971558
+
+    # init the 'Plane' selected for 'ClipType'
+    clip3.ClipType.Origin = [0.0, -150.0, 0.0]
+
+    # init the 'Plane' selected for 'HyperTreeGridClipper'
+    clip3.HyperTreeGridClipper.Origin = [0.0, -150.0, 0.0]
+
+    # Properties modified on clip3.ClipType
+    clip3.ClipType.Origin = [1500.0, -150.0, 0.0]
+
+    # show data in view
+    clip3Display = Show(clip3, renderView1, "UnstructuredGridRepresentation")
+
+    # trace defaults for the display properties.
+    clip3Display.Representation = "Surface"
+    clip3Display.ColorArrayName = ["POINTS", name]
+    clip3Display.LookupTable = sigma_xxLUT
+    clip3Display.SelectTCoordArray = "None"
+    clip3Display.SelectNormalArray = "None"
+    clip3Display.SelectTangentArray = "None"
+    clip3Display.OSPRayScaleArray = name
+    clip3Display.OSPRayScaleFunction = "PiecewiseFunction"
+    clip3Display.SelectOrientationVectors = "None"
+    clip3Display.ScaleFactor = 378.05637207031253
+    clip3Display.SelectScaleArray = name
+    clip3Display.GlyphType = "Arrow"
+    clip3Display.GlyphTableIndexArray = name
+    clip3Display.GaussianRadius = 18.902818603515627
+    clip3Display.SetScaleArray = ["POINTS", name]
+    clip3Display.ScaleTransferFunction = "PiecewiseFunction"
+    clip3Display.OpacityArray = ["POINTS", name]
+    clip3Display.OpacityTransferFunction = "PiecewiseFunction"
+    clip3Display.DataAxesGrid = "GridAxesRepresentation"
+    clip3Display.PolarAxes = "PolarAxesRepresentation"
+    clip3Display.ScalarOpacityFunction = sigma_xxPWF
+    clip3Display.ScalarOpacityUnitDistance = 140.15433787367883
+    clip3Display.OpacityArrayName = ["POINTS", name]
+    clip3Display.SelectInputVectors = [None, ""]
+    clip3Display.WriteLog = ""
+
+    # init the 'PiecewiseFunction' selected for 'ScaleTransferFunction'
+    clip3Display.ScaleTransferFunction.Points = [
+        -2.363538980484009,
+        0.0,
+        0.5,
+        0.0,
+        6.50651741027832,
+        1.0,
+        0.5,
+        0.0,
+    ]
+
+    # init the 'PiecewiseFunction' selected for 'OpacityTransferFunction'
+    clip3Display.OpacityTransferFunction.Points = [
+        -2.363538980484009,
+        0.0,
+        0.5,
+        0.0,
+        6.50651741027832,
+        1.0,
+        0.5,
+        0.0,
+    ]
+
+    # hide data in view
+    Hide(clip2, renderView1)
+
+    # show color bar/color legend
+    clip3Display.SetScalarBarVisibility(renderView1, True)
+
+    # update the view to ensure updated data information
+    renderView1.Update()
+
+    # toggle interactive widget visibility (only when running from the GUI)
+    HideInteractiveWidgets(proxy=clip3.ClipType)
+
     # get color legend/bar for sigma_xxLUT in view renderView1
     sigma_xxLUTColorBar = GetScalarBar(sigma_xxLUT, renderView1)
 
@@ -294,7 +376,7 @@ def main(filename, min_value, max_value, name, label, blocknr, figure_folder):
     sigma_xxTF2D.RescaleTransferFunction(min_value, max_value, 0.0, 1.0)
 
     # toggle interactive widget visibility (only when running from the GUI)
-    HideInteractiveWidgets(proxy=clip2.ClipType)
+    HideInteractiveWidgets(proxy=clip3.ClipType)
 
     # get layout
     layout1 = GetLayout()
