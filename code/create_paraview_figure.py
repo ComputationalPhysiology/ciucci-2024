@@ -358,7 +358,7 @@ def main(filename, min_value, max_value, name, label, blocknr, figure_folder):
     sigma_xxLUTColorBar.RangeLabelFormat = "%-#6.1f"
 
     # Apply a preset using its name. Note this may not work as expected when presets have duplicate names.
-    sigma_xxLUT.ApplyPreset("Viridis (matplotlib)", True)
+    # sigma_xxLUT.ApplyPreset("Viridis (matplotlib)", True)
 
     # change scalar bar placement
     sigma_xxLUTColorBar.Orientation = "Horizontal"
