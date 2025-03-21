@@ -8,13 +8,18 @@ def add_preprocess_lv_arguments(parser: argparse.ArgumentParser) -> None:
         "-o",
         "--mesh-folder",
         type=Path,
-        default=Path.cwd().parent / "meshes-lv",
+        default=Path.cwd().parent / "meshes/lv-native",
     )
-    parser.add_argument("--r-short-endo", type=float, default=4.0)
-    parser.add_argument("--r-long-endo", type=float, default=8.0)
-    parser.add_argument("--r-short-epi", type=float, default=5.5)
-    parser.add_argument("--r-long-epi", type=float, default=9.5)
-    parser.add_argument("--psize-ref", type=float, default=0.5)
+    parser.add_argument(
+        "-c", "--case", type=str, default="native", choices=["native", "transplanted"]
+    )
+    parser.add_argument(
+        "-p",
+        "--psize-ref",
+        type=float,
+        default=1.0,
+        help="Reference psize (smaller values yield finer meshes)",
+    )
 
 
 def add_preprocess_cylinder_arguments(parser: argparse.ArgumentParser) -> None:
@@ -41,6 +46,9 @@ def add_run_lv_arguments(parser: argparse.ArgumentParser) -> None:
         "--output-folder",
         type=Path,
         default=Path.cwd().parent / "results-lv",
+    )
+    parser.add_argument(
+        "-c", "--case", type=str, default="native", choices=["native", "transplanted"]
     )
 
 

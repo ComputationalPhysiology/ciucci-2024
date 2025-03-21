@@ -1,10 +1,8 @@
 import subprocess as sp
 from pathlib import Path
 
-
-results_folder_tmp = (
-    "/Users/finsberg/local/src/ciucci-2024/code/results/cylinder{varying_str}/spring3000"
-)
+results_folder_tmp = "/Users/finsberg/local/src/cardiac-cancer/code/results4/cylinder_fine{varying_str}_incomp/spring3000.0"  # noqa
+# results_folder_tmp = "/Users/finsberg/local/src/ciucci-2024/code/results/cylinder{varying_str}/spring3000"  # noqa: E501
 figure_folder_tmp = "/Users/finsberg/local/src/ciucci-2024/figures/cylinder{varying_str}/spring3000"
 
 

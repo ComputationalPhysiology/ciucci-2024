@@ -75,7 +75,7 @@ def load_lv_arrs(data_path, output, gammas, pressures, mesh_folder: Path = Path(
     df.to_csv(data_path)
 
 
-def postprocess_lv(resultsdir, figdir, mesh_folder, print_stats=False, create_paraview=False):
+def postprocess_lv(resultsdir, figdir, mesh_folder, print_stats=False):
     print("Postprocessing LV")
     output = Path(resultsdir) / "results.xdmf"
 
@@ -102,10 +102,6 @@ def postprocess_lv(resultsdir, figdir, mesh_folder, print_stats=False, create_pa
         print(unloaded.group_by("name").agg(pl.col("*").mean()))
         print(loaded.group_by("name").agg(pl.col("*").mean()))
 
-        return
-
-    if create_paraview:
-        create_paraview_files(resultsdir, figdir=figdir, mesh_folder=mesh_folder)
         return
 
     df = pd.read_csv(data_path)
@@ -176,42 +172,3 @@ def postprocess_lv(resultsdir, figdir, mesh_folder, print_stats=False, create_pa
     ax.grid()
     fig.savefig(figdir / "strain.svg")  # type: ignore
     plt.close(fig)
-
-
-def create_paraview_files(resultsdir, figdir, mesh_folder: Path = Path("meshes/lv")):
-    print("Creating Paraview files")
-    gammas = np.load(resultsdir / "gammas.npy")
-    output = Path(resultsdir) / "results.xdmf"
-    pvd_output = Path(figdir) / "pvd_files"
-    pvd_output.mkdir(exist_ok=True, parents=True)
-    geo = get_lv_geometry(mesh_folder=mesh_folder)
-
-    V_DG2 = dolfin.FunctionSpace(geo.mesh, "DG", 2)
-    V_CG2 = dolfin.VectorFunctionSpace(geo.mesh, "CG", 2)
-    V_CG1 = dolfin.FunctionSpace(geo.mesh, "CG", 1)
-
-    u = dolfin.Function(V_CG2)
-    u.rename("u", "")
-    f = dolfin.Function(V_DG2)
-
-    with dolfin.XDMFFile(output.as_posix()) as xdmf:
-        for ti in range(len(gammas)):
-            # print(ti)
-            xdmf.read_checkpoint(u, "u", ti)
-
-            for i, name in enumerate(
-                [
-                    "sigma_ff",
-                    "sigma_ss",
-                    "sigma_nn",
-                ],
-            ):
-                xdmf.read_checkpoint(f, name, ti)
-                f_int = dolfin.interpolate(SmoothLV(f), V_CG1)
-                f_int.rename(name, "")
-                with dolfin.XDMFFile((pvd_output / f"{name}_{ti}.xdmf").as_posix()) as xdmf2:
-                    xdmf2.parameters["functions_share_mesh"] = True
-                    xdmf2.parameters["flush_output"] = True
-
-                    xdmf2.write(u, ti)
-                    xdmf2.write(f_int, ti)

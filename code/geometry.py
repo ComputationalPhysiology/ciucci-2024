@@ -1,7 +1,9 @@
 from pathlib import Path
 import typing
+import shutil
 import json
 
+import math
 import dolfin
 import meshio
 import pulse
@@ -55,29 +57,58 @@ def create_cylinder_mesh(
 
 
 def preprocess_lv(
-    mesh_folder: Path,
-    r_short_endo=4.0,
-    r_long_endo=8.0,
-    r_short_epi=5.5,
-    r_long_epi=9.5,
-    psize_ref=0.5,
-    create_fibers=True,
-    fiber_space="Quadrature_6",
-    **kwargs,
+    mesh_folder: Path = Path("meshes/lv"),
+    case: typing.Literal["native", "transplanted"] = "native",
+    psize_ref: float = 1.0,
 ):
-    cardiac_geometries.create_lv_ellipsoid(
+    if case == "native":
+        width = 1.0
+        # r_long_epi = 6.2
+        # r_short_epi = 3.5025
+        r_long_epi = 5.7
+        r_short_epi = 3.29
+        r_long_endo = r_long_epi - width
+        r_short_endo = r_short_epi - width
+        mu_base_endo = -math.acos(12 / 17)
+        mu_base_epi = -math.acos(15 / 20)
+
+    elif case == "transplanted":
+        width = 0.5
+        r_long_epi = 3.8
+        r_short_epi = 2.315
+        r_long_endo = r_long_epi - width
+        r_short_endo = r_short_epi - width
+        mu_base_endo = -math.acos(12 / 17)
+        mu_base_epi = -math.acos(15 / 20)
+
+    else:
+        raise ValueError(f"Unknown case {case}")
+
+    shutil.rmtree(mesh_folder, ignore_errors=True)
+
+    geo = cardiac_geometries.create_lv_ellipsoid(
         mesh_folder,
         r_short_endo=r_short_endo,
         r_long_endo=r_long_endo,
         r_short_epi=r_short_epi,
         r_long_epi=r_long_epi,
         psize_ref=psize_ref,
-        create_fibers=create_fibers,
-        fiber_space=fiber_space,
+        mu_base_endo=mu_base_endo,
+        mu_base_epi=mu_base_epi,
+        create_fibers=True,
+        fiber_space="Quadrature_6",
     )
 
+    geometry = pulse.HeartGeometry(
+        mesh=geo.mesh,
+        markers=geo.markers,
+        marker_functions=pulse.MarkerFunctions(ffun=geo.ffun),
+        microstructure=None,
+    )
+    print(f"Cavity volume : {geometry.cavity_volume()}")
 
-def get_lv_geometry(mesh_folder: Path = Path("meshes/lv")):
+
+def get_lv_geometry(mesh_folder: Path = Path("meshes/lv-native")):
     if not mesh_folder.is_dir():
         raise FileNotFoundError(f"Folder {mesh_folder} does not exist")
 
