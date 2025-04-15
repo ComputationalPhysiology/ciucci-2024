@@ -129,11 +129,6 @@ def add_postprocess_lv_arguments(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Print statistics",
     )
-    parser.add_argument(
-        "--create-paraview",
-        action="store_true",
-        help="Create Paraview files",
-    )
 
 
 def add_postprocess_cylinder_arguments(parser: argparse.ArgumentParser) -> None:

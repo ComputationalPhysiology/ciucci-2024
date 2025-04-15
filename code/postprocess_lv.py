@@ -30,7 +30,9 @@ class SmoothLV(dolfin.UserExpression):
         return ()
 
 
-def load_lv_arrs(data_path, output, gammas, pressures, mesh_folder: Path = Path("meshes/lv")):
+def load_lv_arrs(
+    data_path, output, gammas, pressures, volumes, mesh_folder: Path = Path("meshes/lv")
+):
     print("Loading LV arrays")
     geo = get_lv_geometry(mesh_folder=mesh_folder)
     V_DG2 = dolfin.FunctionSpace(geo.mesh, "DG", 1)
@@ -40,6 +42,7 @@ def load_lv_arrs(data_path, output, gammas, pressures, mesh_folder: Path = Path(
     p = dolfin.Function(V_CG1)
 
     data = []
+
     with dolfin.XDMFFile(output.as_posix()) as xdmf:
         for ti in range(len(gammas)):
             # xdmf.read_checkpoint(u, "u", ti)
@@ -62,31 +65,34 @@ def load_lv_arrs(data_path, output, gammas, pressures, mesh_folder: Path = Path(
                 data.extend(
                     [
                         {
+                            "time": ti,
                             "name": name,
                             "value": fi,
                             "gamma": gammas[ti],
                             "pressure": pressures[ti],
+                            "volume": volumes[ti],
                             "latex": name2latex(name),
                         }
                         for fi in f_arr
                     ]
                 )
+
     df = pd.DataFrame(data)
     df.to_csv(data_path)
 
 
 def postprocess_lv(resultsdir, figdir, mesh_folder, print_stats=False):
     print("Postprocessing LV")
-    output = Path(resultsdir) / "results.xdmf"
+    output = Path(resultsdir) / "results_reference.xdmf"
 
     gammas = np.load(resultsdir / "gammas.npy")
     pressures = np.load(resultsdir / "pressures.npy")
-
+    volumes = np.load(resultsdir / "volumes.npy")
     figdir.mkdir(exist_ok=True, parents=True)
 
     data_path = resultsdir / "results.csv"
-    if not data_path.is_file():
-        load_lv_arrs(data_path, output, gammas, pressures, mesh_folder=mesh_folder)
+    if 1:  # not data_path.is_file():
+        load_lv_arrs(data_path, output, gammas, pressures, volumes, mesh_folder=mesh_folder)
 
     if print_stats:
         try:
@@ -96,26 +102,35 @@ def postprocess_lv(resultsdir, figdir, mesh_folder, print_stats=False):
             raise SystemExit(1)
 
         df = pl.read_csv(data_path)
-        unloaded = df.filter(pl.col("pressure").eq(0.0)).filter(pl.col("gamma").eq(0.2))
-        loaded = df.filter(pl.col("pressure").eq(15.0)).filter(pl.col("gamma").eq(0.2))
 
-        print(unloaded.group_by("name").agg(pl.col("*").mean()))
-        print(loaded.group_by("name").agg(pl.col("*").mean()))
+        ED = df.filter(pl.col("time").eq(1))
+        ES = df.filter(pl.col("time").eq(2))
+        print(mesh_folder)
+        print("ED")
+        print(
+            ED.group_by("name").agg(pl.col("*").mean())[
+                ["name", "value", "pressure", "volume", "gamma"]
+            ]
+        )
+        print("ES")
+        print(
+            ES.group_by("name").agg(pl.col("*").mean())[
+                ["name", "value", "pressure", "volume", "gamma"]
+            ]
+        )
 
         return
 
     df = pd.read_csv(data_path)
 
-    target_gamma = 0.2
-    df_unloaded = df[np.isclose(df["pressure"], 0.0) & np.isclose(df["gamma"], target_gamma)]
-    df_unloaded = df_unloaded.assign(label="Unloaded systole\nESP = 0 kPa")
+    # target_gamma = 0.2
+    df_ED = df[np.isclose(df["time"], 1)]
+    df_ED = df_ED.assign(label="ED")
 
-    traget_pressure = 15.0
-    df_loaded = df[
-        np.isclose(df["pressure"], traget_pressure) & np.isclose(df["gamma"], target_gamma)
-    ]
-    df_loaded = df_loaded.assign(label="Standard systole\nESP = 15 kPa")
-    df1 = pd.concat([df_loaded, df_unloaded])
+    # traget_pressure = 15.0
+    df_ES = df[np.isclose(df["time"], 2)]
+    df_ES = df_ES.assign(label="ES")
+    df1 = pd.concat([df_ED, df_ES])
 
     df1_dev_stress = df1[df1["name"].isin(["sigma_dev_ff", "sigma_dev_ss", "sigma_dev_nn", "p"])]
     plt.rcParams.update({"font.size": 16})
