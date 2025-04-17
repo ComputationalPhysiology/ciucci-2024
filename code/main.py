@@ -131,6 +131,26 @@ def add_postprocess_lv_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def add_postprocess_lv_ES_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "-n",
+        "--nativedir",
+        type=Path,
+    )
+    parser.add_argument(
+        "-t",
+        "--transplanteddir",
+        type=Path,
+        default=Path.cwd().parent / "meshes-lv",
+    )
+    parser.add_argument(
+        "-o",
+        "--figdir",
+        type=Path,
+        default=Path.cwd().parent / "figures-lv",
+    )
+
+
 def add_postprocess_cylinder_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "-r",
@@ -216,6 +236,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     postprocess_lv_parser = subparsers.add_parser("postprocess-lv", help="Postprocess LV results")
     add_postprocess_lv_arguments(postprocess_lv_parser)
 
+    # Postprocess LV ES
+    postprocess_lv_ES_parser = subparsers.add_parser(
+        "postprocess-lv-ES", help="Postprocess LV ES results"
+    )
+    add_postprocess_lv_ES_arguments(postprocess_lv_ES_parser)
+
     # Postprocess cylinder
     postprocess_cylinder_parser = subparsers.add_parser(
         "postprocess-cylinder", help="Postprocess cylinder results"
@@ -267,6 +293,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         import postprocess_lv
 
         postprocess_lv.postprocess_lv(**args)
+
+    elif cmd == "postprocess-lv-ES":
+        import postprocess_lv
+
+        postprocess_lv.postprocess_lv_ES(**args)
 
     elif cmd == "postprocess-cylinder":
         import postprocess_cylinder

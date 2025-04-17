@@ -91,7 +91,7 @@ def postprocess_lv(resultsdir, figdir, mesh_folder, print_stats=False):
     figdir.mkdir(exist_ok=True, parents=True)
 
     data_path = resultsdir / "results.csv"
-    if 1:  # not data_path.is_file():
+    if data_path.is_file():
         load_lv_arrs(data_path, output, gammas, pressures, volumes, mesh_folder=mesh_folder)
 
     if print_stats:
@@ -186,4 +186,43 @@ def postprocess_lv(resultsdir, figdir, mesh_folder, print_stats=False):
     ax.set_ylabel("Average strain")
     ax.grid()
     fig.savefig(figdir / "strain.svg")  # type: ignore
+    plt.close(fig)
+
+
+def postprocess_lv_ES(nativedir, transplanteddir, figdir):
+    try:
+        df_native = pd.read_csv(nativedir / "results.csv")
+        df_trans = pd.read_csv(transplanteddir / "results.csv")
+    except FileNotFoundError:
+        print("No results found. Please run postprocess_lv first.")
+        return
+
+    # breakpoint()
+
+    df_native_ES = df_native[np.isclose(df_native["time"], 2)]
+    df_native_ES = df_native_ES.assign(label="Native")
+
+    df_trans_ES = df_trans[np.isclose(df_trans["time"], 2)]
+    df_trans_ES = df_trans_ES.assign(label="Transplanted")
+
+    df1 = pd.concat([df_trans_ES, df_native_ES])
+
+    df1_stress = df1[df1["name"].isin(["sigma_ff", "sigma_ss", "sigma_nn"])]
+    plt.rcParams.update({"font.size": 16})
+    fig = plt.figure()
+
+    ax = sns.barplot(
+        data=df1_stress,
+        x="label",
+        y="value",
+        hue="latex",
+        errorbar="ci",
+        alpha=0.7,
+    )
+    ax.get_legend().set_title(None)
+    ax.set_xlabel("")
+    ax.set_ylabel("Average stress [kPa]")
+    ax.grid()
+    fig.tight_layout()
+    fig.savefig(figdir / "stress_ES.svg")  # type: ignore
     plt.close(fig)
