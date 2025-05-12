@@ -337,10 +337,11 @@ def main(
         gamma_ES = 0.26
     elif case == "transplanted":
         EDP = 0.0
-        ESP = 0.0
+        ESP = 8.0
         target_EDV = 37.4
         target_ESV = 34.1
-        gamma_ES = 0.056
+        # gamma_ES = 0.056
+        gamma_ES = 0.1905
 
     gammas = [0.0, 0.0, gamma_ES]
     pressures = [0.0, EDP, ESP]

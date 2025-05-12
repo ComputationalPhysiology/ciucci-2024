@@ -165,12 +165,20 @@ python3 main.py run-lv -i meshes/transplanted -c transplanted -o results/transpl
 python3 main.py postprocess-lv -i meshes/native -r results/native -o figures/native
 ```
 
+#### Transplanted
+
 ```
 python3 main.py postprocess-lv -i meshes/transplanted -r results/transplanted -o figures/transplanted
 ```
 Get stats using
 ```
-python3 main.py postprocess-lv -i meshes/lv -r results/lv/ -o figures/lv --print-stats
+python3 main.py postprocess-lv -i meshes/transplanted -r results/transplanted -o figures/transplanted --print-stats
+```
+
+### Comparison for end-systole
+
+```
+python3 main.py postprocess-lv-ES -n results/native -t results/transplanted -o figures
 ```
 
 

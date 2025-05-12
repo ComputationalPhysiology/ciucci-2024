@@ -91,7 +91,7 @@ def postprocess_lv(resultsdir, figdir, mesh_folder, print_stats=False):
     figdir.mkdir(exist_ok=True, parents=True)
 
     data_path = resultsdir / "results.csv"
-    if data_path.is_file():
+    if not data_path.is_file():
         load_lv_arrs(data_path, output, gammas, pressures, volumes, mesh_folder=mesh_folder)
 
     if print_stats:
