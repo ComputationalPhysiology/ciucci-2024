@@ -329,19 +329,20 @@ def main(
 
     data_collector = DataCollector(problem=problem, folder=output_folder)
 
+    # Pressure alues are taken from https://journals.physiology.org/doi/full/10.1152/ajpheart.00218.2013
+    # Volumes are given in spreadsheet from data
     if case == "native":
-        EDP = 1.0
-        ESP = 15.0
+        EDP = 1.3
+        ESP = 13.5
         target_EDV = 115.8
         target_ESV = 52.2
-        gamma_ES = 0.26
+        gamma_ES = 0.255
     elif case == "transplanted":
-        EDP = 0.0
+        EDP = 1.0
         ESP = 8.0
         target_EDV = 37.4
         target_ESV = 34.1
-        # gamma_ES = 0.056
-        gamma_ES = 0.1905
+        gamma_ES = 0.126
 
     gammas = [0.0, 0.0, gamma_ES]
     pressures = [0.0, EDP, ESP]

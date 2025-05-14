@@ -32,7 +32,7 @@ def plot_native_ES():
     s = 125.0
     transform = pv.Transform().scale(s, s, s)
     grid_trans = transform.apply(grid)
-    grid_trans.translate((920.0, 1030, 0), inplace=True)
+    grid_trans.translate((920.0, 1070, 0), inplace=True)
 
     image = pv.read(imagefile)
 

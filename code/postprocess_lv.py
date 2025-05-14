@@ -205,7 +205,7 @@ def postprocess_lv_ES(nativedir, transplanteddir, figdir):
     df_trans_ES = df_trans[np.isclose(df_trans["time"], 2)]
     df_trans_ES = df_trans_ES.assign(label="Transplanted")
 
-    df1 = pd.concat([df_trans_ES, df_native_ES])
+    df1 = pd.concat([df_native_ES, df_trans_ES])
 
     df1_stress = df1[df1["name"].isin(["sigma_ff", "sigma_ss", "sigma_nn"])]
     plt.rcParams.update({"font.size": 16})
@@ -216,9 +216,100 @@ def postprocess_lv_ES(nativedir, transplanteddir, figdir):
         x="label",
         y="value",
         hue="latex",
-        errorbar="ci",
+        errorbar=None,
         alpha=0.7,
     )
+
+    # The below code is for making the error bars only
+    # going outside the bar
+    aggregator = sns._statistics.EstimateAggregator("mean", ("ci", 95), n_boot=1000, seed=None)
+    ys = [
+        aggregator(
+            df1_stress[(df1_stress["label"] == "Native") & (df1_stress["name"] == "sigma_ff")],
+            "value",
+        ),
+        aggregator(
+            df1_stress[(df1_stress["label"] == "Native") & (df1_stress["name"] == "sigma_ss")],
+            "value",
+        ),
+        aggregator(
+            df1_stress[(df1_stress["label"] == "Native") & (df1_stress["name"] == "sigma_nn")],
+            "value",
+        ),
+        aggregator(
+            df1_stress[
+                (df1_stress["label"] == "Transplanted") & (df1_stress["name"] == "sigma_ff")
+            ],
+            "value",
+        ),
+        aggregator(
+            df1_stress[
+                (df1_stress["label"] == "Transplanted") & (df1_stress["name"] == "sigma_ss")
+            ],
+            "value",
+        ),
+        aggregator(
+            df1_stress[
+                (df1_stress["label"] == "Transplanted") & (df1_stress["name"] == "sigma_nn")
+            ],
+            "value",
+        ),
+    ]
+
+    y_mean = np.array([y.value for y in ys])
+    y_top = np.array([abs(y.valuemax - y.value) for y in ys])
+    y_bottom = np.array([abs(y.valuemin - y.value) for y in ys])
+
+    # y_std = np.array(
+    #     [
+    #         df1_stress[(df1_stress["label"] == "Native") & (df1_stress["name"] == "sigma_ff")][
+    #             "value"
+    #         ].std(),
+    #         df1_stress[(df1_stress["label"] == "Native") & (df1_stress["name"] == "sigma_ss")][
+    #             "value"
+    #         ].std(),
+    #         df1_stress[(df1_stress["label"] == "Native") & (df1_stress["name"] == "sigma_nn")][
+    #             "value"
+    #         ].std(),
+    #         df1_stress[
+    #             (df1_stress["label"] == "Transplanted") & (df1_stress["name"] == "sigma_ff")
+    #         ]["value"].std(),
+    #         df1_stress[
+    #             (df1_stress["label"] == "Transplanted") & (df1_stress["name"] == "sigma_ss")
+    #         ]["value"].std(),
+    #         df1_stress[
+    #             (df1_stress["label"] == "Transplanted") & (df1_stress["name"] == "sigma_nn")
+    #         ]["value"].std(),
+    #     ]
+    # )
+    x = np.array([-0.25, 0.0, 0.25, 0.75, 1.0, 1.25])
+    top_inds = [0, 3, 4]
+
+    plotline, caplines, barlinecols = ax.errorbar(
+        x[top_inds],
+        y_mean[top_inds],
+        yerr=y_top[top_inds],
+        lolims=True,
+        capsize=0.0,
+        ls="None",
+        color="black",
+    )
+    caplines[0].set_marker("_")
+    caplines[0].set_markersize(20)
+    bottom_inds = [1, 2, 5]
+
+    plotline, caplines, barlinecols = ax.errorbar(
+        x[bottom_inds],
+        y_mean[bottom_inds],
+        yerr=y_bottom[bottom_inds],
+        uplims=True,
+        capsize=0.0,
+        ls="None",
+        color="black",
+    )
+    caplines[0].set_marker("_")
+    caplines[0].set_markersize(20)
+
     ax.get_legend().set_title(None)
     ax.set_xlabel("")
     ax.set_ylabel("Average stress [kPa]")

@@ -122,7 +122,7 @@ python3 main.py postprocess-cylinder-twitch -i meshes/cylinder -r results/cylind
 python3 main.py preprocess-lv -o meshes/native -c native
 ```
 
-#### Native
+#### Transplanted
 ```
 python3 main.py preprocess-lv -o meshes/transplanted -c transplanted
 ```

@@ -59,25 +59,39 @@ def create_cylinder_mesh(
 def preprocess_lv(
     mesh_folder: Path = Path("meshes/lv"),
     case: typing.Literal["native", "transplanted"] = "native",
-    psize_ref: float = 1.0,
 ):
+    # Volumes are calibrated by matching end-diastolic volumes
+    # given in the spreadsheet.
     if case == "native":
-        width = 1.0
-        # r_long_epi = 6.2
-        # r_short_epi = 3.5025
-        r_long_epi = 5.7
-        r_short_epi = 3.29
-        r_long_endo = r_long_epi - width
-        r_short_endo = r_short_epi - width
+        psize_ref: float = 1.0
+        width = 0.97
+        # r_long_epi = 5.7
+        # r_short_epi = 3.29
+        # r_long_endo = r_long_epi - width
+        # r_short_endo = r_short_epi - width
+        r_long_endo = 4.67
+        r_short_endo = 2.26
+        r_long_epi = r_long_endo + width
+        r_short_epi = r_short_endo + width
+
+        print(f"r_long_epi: {r_long_epi}, r_short_epi: {r_short_epi}")
+        print(f"r_long_endo: {r_long_endo}, r_short_endo: {r_short_endo}")
+        # exit()
         mu_base_endo = -math.acos(12 / 17)
         mu_base_epi = -math.acos(15 / 20)
 
     elif case == "transplanted":
-        width = 0.5
+        psize_ref = 0.7
+        width = 0.707
         r_long_epi = 3.8
         r_short_epi = 2.315
         r_long_endo = r_long_epi - width
         r_short_endo = r_short_epi - width
+        r_long_epi = r_long_endo + width
+        r_short_epi = r_short_endo + width
+        print(f"r_long_epi: {r_long_epi}, r_short_epi: {r_short_epi}")
+        print(f"r_long_endo: {r_long_endo}, r_short_endo: {r_short_endo}")
+        # exit()
         mu_base_endo = -math.acos(12 / 17)
         mu_base_epi = -math.acos(15 / 20)
 

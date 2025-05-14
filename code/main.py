@@ -13,13 +13,6 @@ def add_preprocess_lv_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "-c", "--case", type=str, default="native", choices=["native", "transplanted"]
     )
-    parser.add_argument(
-        "-p",
-        "--psize-ref",
-        type=float,
-        default=1.0,
-        help="Reference psize (smaller values yield finer meshes)",
-    )
 
 
 def add_preprocess_cylinder_arguments(parser: argparse.ArgumentParser) -> None:
