@@ -93,7 +93,7 @@ class DataCollector:
             self.functions[label]["E_nn"] = dolfin.Function(V_DG2)
             self.functions[label]["von_Mises"] = dolfin.Function(V_DG2)
 
-            V_smooth = dolfin.FunctionSpace(mesh, "CG", 1)
+            V_smooth = dolfin.FunctionSpace(mesh, "DG", 1)
             self.functions[f"{label}_smooth"]["sigma_ff"] = dolfin.Function(V_smooth)
             self.functions[f"{label}_smooth"]["sigma_ss"] = dolfin.Function(V_smooth)
             self.functions[f"{label}_smooth"]["sigma_nn"] = dolfin.Function(V_smooth)
@@ -336,13 +336,14 @@ def main(
         ESP = 13.5
         target_EDV = 115.8
         target_ESV = 52.2
-        gamma_ES = 0.255
+        gamma_ES = 0.303
+
     elif case == "transplanted":
         EDP = 1.0
         ESP = 8.0
         target_EDV = 37.4
         target_ESV = 34.1
-        gamma_ES = 0.126
+        gamma_ES = 0.15
 
     gammas = [0.0, 0.0, gamma_ES]
     pressures = [0.0, EDP, ESP]
@@ -365,14 +366,14 @@ def main(
     volumes.append(EDV)
     data_collector.save(1.0)
     print(f"EDP: {EDP} kPa, EDV: {EDV} uL, target EDV: {target_EDV}, gamma: {float(gamma)}")
-
+    # exit()
     # ES
     pulse.iterate.iterate(
         problem,
         (lvp, gamma),
         (ESP, gamma_ES),
-        initial_number_of_steps=20,
-        continuation=False,
+        initial_number_of_steps=1000,
+        continuation=True,
     )
     ESV = geometry.cavity_volume(u=problem.state.split()[0])
     volumes.append(ESV)

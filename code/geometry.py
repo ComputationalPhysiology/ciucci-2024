@@ -60,37 +60,69 @@ def preprocess_lv(
     mesh_folder: Path = Path("meshes/lv"),
     case: typing.Literal["native", "transplanted"] = "native",
 ):
+    resolution = "fine"
     # Volumes are calibrated by matching end-diastolic volumes
     # given in the spreadsheet.
     if case == "native":
-        psize_ref: float = 1.0
-        width = 0.97
-        # r_long_epi = 5.7
-        # r_short_epi = 3.29
-        # r_long_endo = r_long_epi - width
-        # r_short_endo = r_short_epi - width
-        r_long_endo = 4.67
-        r_short_endo = 2.26
+        if resolution == "fine":
+            psize_ref: float = 0.2
+            # Volume = 83.58
+            # psize_ref: float = 0.17
+            # r_long_endo = 4.656
+            # r_short_endo = 2.246
+            # r_long_endo = 4.630
+            # r_short_endo = 2.220
+            r_long_endo = 4.519
+            r_short_endo = 2.169
+
+        else:
+            # Volume = 83.557
+            psize_ref: float = 1.0  # type: ignore
+            r_long_endo = 4.67
+            r_short_endo = 2.26
+
+        width = 0.55
+
         r_long_epi = r_long_endo + width
         r_short_epi = r_short_endo + width
 
         print(f"r_long_epi: {r_long_epi}, r_short_epi: {r_short_epi}")
         print(f"r_long_endo: {r_long_endo}, r_short_endo: {r_short_endo}")
         # exit()
+
         mu_base_endo = -math.acos(12 / 17)
         mu_base_epi = -math.acos(15 / 20)
 
     elif case == "transplanted":
-        psize_ref = 0.7
-        width = 0.707
-        r_long_epi = 3.8
-        r_short_epi = 2.315
-        r_long_endo = r_long_epi - width
-        r_short_endo = r_short_epi - width
+        if resolution == "fine":
+            psize_ref: float = 0.2  # type: ignore
+
+            # Volume = 27.96
+            # psize_ref = 0.14
+            # r_long_endo = 3.082
+            # r_short_endo = 1.597
+            # r_long_endo = 3.063
+            # r_short_endo = 1.578
+            r_long_endo = 3.03
+            r_short_endo = 1.545
+            # width = 0.72
+        else:
+            # Volume = 27.96
+            psize_ref: float = 0.7  # type: ignore
+            r_long_endo = 3.093
+            r_short_endo = 1.608
+
+        width = 0.5
+
+        # r_long_epi = 3.8
+        # r_short_epi = 2.315
+        # r_long_endo = r_long_epi - width
+        # r_short_endo = r_short_epi - width
         r_long_epi = r_long_endo + width
         r_short_epi = r_short_endo + width
         print(f"r_long_epi: {r_long_epi}, r_short_epi: {r_short_epi}")
         print(f"r_long_endo: {r_long_endo}, r_short_endo: {r_short_endo}")
+
         # exit()
         mu_base_endo = -math.acos(12 / 17)
         mu_base_epi = -math.acos(15 / 20)
@@ -110,7 +142,7 @@ def preprocess_lv(
         mu_base_endo=mu_base_endo,
         mu_base_epi=mu_base_epi,
         create_fibers=True,
-        fiber_space="Quadrature_6",
+        fiber_space="DG_1",
     )
 
     geometry = pulse.HeartGeometry(
