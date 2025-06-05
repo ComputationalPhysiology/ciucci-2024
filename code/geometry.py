@@ -23,7 +23,6 @@ def create_cylinder_mesh(
     gmsh.model.occ.synchronize()
 
     surfaces = gmsh.model.occ.getEntities(dim=2)
-    # inlet_marker, outlet_marker, wall_marker, obstacle_marker = 1, 3, 5, 7
     right = 1
     left = 2
     sides = 3
@@ -60,26 +59,12 @@ def preprocess_lv(
     mesh_folder: Path = Path("meshes/lv"),
     case: typing.Literal["native", "transplanted"] = "native",
 ):
-    resolution = "fine"
     # Volumes are calibrated by matching end-diastolic volumes
     # given in the spreadsheet.
     if case == "native":
-        if resolution == "fine":
-            psize_ref: float = 0.2
-            # Volume = 83.58
-            # psize_ref: float = 0.17
-            # r_long_endo = 4.656
-            # r_short_endo = 2.246
-            # r_long_endo = 4.630
-            # r_short_endo = 2.220
-            r_long_endo = 4.519
-            r_short_endo = 2.169
-
-        else:
-            # Volume = 83.557
-            psize_ref: float = 1.0  # type: ignore
-            r_long_endo = 4.67
-            r_short_endo = 2.26
+        psize_ref: float = 0.3
+        r_long_endo = 4.519
+        r_short_endo = 2.169
 
         width = 0.55
 
@@ -88,36 +73,17 @@ def preprocess_lv(
 
         print(f"r_long_epi: {r_long_epi}, r_short_epi: {r_short_epi}")
         print(f"r_long_endo: {r_long_endo}, r_short_endo: {r_short_endo}")
-        # exit()
 
         mu_base_endo = -math.acos(12 / 17)
         mu_base_epi = -math.acos(15 / 20)
 
     elif case == "transplanted":
-        if resolution == "fine":
-            psize_ref: float = 0.2  # type: ignore
-
-            # Volume = 27.96
-            # psize_ref = 0.14
-            # r_long_endo = 3.082
-            # r_short_endo = 1.597
-            # r_long_endo = 3.063
-            # r_short_endo = 1.578
-            r_long_endo = 3.03
-            r_short_endo = 1.545
-            # width = 0.72
-        else:
-            # Volume = 27.96
-            psize_ref: float = 0.7  # type: ignore
-            r_long_endo = 3.093
-            r_short_endo = 1.608
+        psize_ref: float = 0.25  # type: ignore
+        r_long_endo = 3.03
+        r_short_endo = 1.545
 
         width = 0.5
 
-        # r_long_epi = 3.8
-        # r_short_epi = 2.315
-        # r_long_endo = r_long_epi - width
-        # r_short_endo = r_short_epi - width
         r_long_epi = r_long_endo + width
         r_short_epi = r_short_endo + width
         print(f"r_long_epi: {r_long_epi}, r_short_epi: {r_short_epi}")

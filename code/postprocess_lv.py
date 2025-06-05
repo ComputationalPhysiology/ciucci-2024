@@ -42,18 +42,18 @@ def load_lv_arrs(
     r = np.sqrt(y**2 + z**2)
 
     if "transplanted" in str(data_path):
-        r_short_endo = 1.54
-        width = 0.5
+        r_short_endo = 1.0
+        width = 4.0
         z_low = -0.3
         z_high = 0.3
     elif "native" in str(data_path):
-        r_short_endo = 2.14
-        width = 0.55
+        r_short_endo = 1.0
+        width = 4.0
         z_low = -0.5
         z_high = 0.5
 
-    r_low = r_short_endo + width * 0.05
-    r_high = r_short_endo + width * 0.95
+    r_low = r_short_endo + width * 0.0
+    r_high = r_short_endo + width * 1.0
 
     dofs = np.where(
         np.logical_and(
@@ -98,6 +98,8 @@ def load_lv_arrs(
     #     )
     # )[0]
 
+    aggregator = sns._statistics.EstimateAggregator("mean", ("ci", 95), n_boot=1000, seed=None)
+
     f_ = dolfin.Function(V_DG2)
     p = dolfin.Function(V_CG1)
 
@@ -123,6 +125,8 @@ def load_lv_arrs(
                 # f_arr = f.vector().get_local()
                 # if name != "p":
                 #     f_arr = f_arr[dofs]
+                x = aggregator(pd.DataFrame({"x": f.vector().get_local()}), "x")
+
                 mean = dolfin.assemble(f * dx(1)) / volume
                 std = dolfin.assemble(dolfin.sqrt((f - mean) ** 2) * dx(1)) / volume
 
@@ -142,6 +146,9 @@ def load_lv_arrs(
                             "pressure": pressures[ti],
                             "volume": volumes[ti],
                             "latex": name2latex(name),
+                            "ci_value": x.x,
+                            "ci_min": x.xmin,
+                            "ci_max": x.xmax,
                         }
                     ]
                 )
@@ -266,7 +273,10 @@ def postprocess_lv_ES(nativedir, transplanteddir, figdir):
         print("No results found. Please run postprocess_lv first.")
         return
 
-    # breakpoint()
+    print("Native")
+    print(df_native)
+    print("Transplanted")
+    print(df_trans)
 
     df_native_ES = df_native[np.isclose(df_native["time"], 2)]
     df_native_ES = df_native_ES.assign(label="Native")
@@ -283,86 +293,25 @@ def postprocess_lv_ES(nativedir, transplanteddir, figdir):
     ax = sns.barplot(
         data=df1_stress,
         x="label",
-        y="mean",
+        y="ci_value",
         hue="latex",
         errorbar=None,
         alpha=0.7,
     )
 
-    # breakpoint()
-
-    # The below code is for making the error bars only
-    # going outside the bar
-    # aggregator = sns._statistics.EstimateAggregator("mean", ("ci", 95), n_boot=1000, seed=None)
-    # ys = [
-    #     aggregator(
-    #         df1_stress[(df1_stress["label"] == "Native") & (df1_stress["name"] == "sigma_ff")],
-    #         "value",
-    #     ),
-    #     aggregator(
-    #         df1_stress[(df1_stress["label"] == "Native") & (df1_stress["name"] == "sigma_ss")],
-    #         "value",
-    #     ),
-    #     aggregator(
-    #         df1_stress[(df1_stress["label"] == "Native") & (df1_stress["name"] == "sigma_nn")],
-    #         "value",
-    #     ),
-    #     aggregator(
-    #         df1_stress[
-    #             (df1_stress["label"] == "Transplanted") & (df1_stress["name"] == "sigma_ff")
-    #         ],
-    #         "value",
-    #     ),
-    #     aggregator(
-    #         df1_stress[
-    #             (df1_stress["label"] == "Transplanted") & (df1_stress["name"] == "sigma_ss")
-    #         ],
-    #         "value",
-    #     ),
-    #     aggregator(
-    #         df1_stress[
-    #             (df1_stress["label"] == "Transplanted") & (df1_stress["name"] == "sigma_nn")
-    #         ],
-    #         "value",
-    #     ),
-    # ]
-
-    # y_mean = np.array([y.value for y in ys])
-    # y_top = np.array([abs(y.valuemax - y.value) for y in ys])
-    # y_bottom = np.array([abs(y.valuemin - y.value) for y in ys])
-
-    # y_std = np.array(
-    #     [
-    #         df1_stress[(df1_stress["label"] == "Native") & (df1_stress["name"] == "sigma_ff")][
-    #             "value"
-    #         ].std(),
-    #         df1_stress[(df1_stress["label"] == "Native") & (df1_stress["name"] == "sigma_ss")][
-    #             "value"
-    #         ].std(),
-    #         df1_stress[(df1_stress["label"] == "Native") & (df1_stress["name"] == "sigma_nn")][
-    #             "value"
-    #         ].std(),
-    #         df1_stress[
-    #             (df1_stress["label"] == "Transplanted") & (df1_stress["name"] == "sigma_ff")
-    #         ]["value"].std(),
-    #         df1_stress[
-    #             (df1_stress["label"] == "Transplanted") & (df1_stress["name"] == "sigma_ss")
-    #         ]["value"].std(),
-    #         df1_stress[
-    #             (df1_stress["label"] == "Transplanted") & (df1_stress["name"] == "sigma_nn")
-    #         ]["value"].std(),
-    #     ]
-    # )
-    # y_top = y_bottom - y_std
-    y_mean = df1_stress["mean"].values
-    y_std = df1_stress["std"].values
+    y_mean = df1_stress["ci_value"].values
+    # y_std = df1_stress["std_all"].values
+    y_max = np.array([ymax - yi for ymax, yi in zip(df1_stress["ci_max"].values, y_mean)])
+    y_min = np.array([yi - ymin for ymin, yi in zip(df1_stress["ci_min"].values, y_mean)])
+    # y_mean = df1_stress["mean_all"].values
+    # y_std = df1_stress["std_all"].values
     x = np.array([-0.25, 0.0, 0.25, 0.75, 1.0, 1.25])
     top_inds = [0, 3]
 
     plotline, caplines, barlinecols = ax.errorbar(
         x[top_inds],
         y_mean[top_inds],
-        yerr=y_std[top_inds],
+        yerr=y_max[top_inds],
         lolims=True,
         capsize=0.0,
         ls="None",
@@ -375,7 +324,7 @@ def postprocess_lv_ES(nativedir, transplanteddir, figdir):
     plotline, caplines, barlinecols = ax.errorbar(
         x[bottom_inds],
         y_mean[bottom_inds],
-        yerr=y_std[bottom_inds],
+        yerr=y_min[bottom_inds],
         uplims=True,
         capsize=0.0,
         ls="None",

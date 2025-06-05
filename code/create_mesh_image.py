@@ -6,6 +6,11 @@ import matplotlib.pyplot as plt
 import pyvista as pv
 
 
+COLORMAP = "cividis"
+CRINKLE = True
+SHOW_EDGES = True
+
+
 def plot_native_ES():
     resultsdir = Path("results") / "native"
     imagefile = Path("../data") / "native.png"
@@ -16,9 +21,9 @@ def plot_native_ES():
         resultsdir / "results_current.xdmf", comm, "/sigma_ff/sigma_ff_2/mesh"
     )
 
-    V = dolfinx.fem.functionspace(mesh, ("DG", 1))
+    V = dolfinx.fem.functionspace(mesh, ("DG", 0))
 
-    cells, types, x = dolfinx.plot.vtk_mesh(V)
+    cells, types, x = dolfinx.plot.vtk_mesh(mesh)
     grid = pv.UnstructuredGrid(cells, types, x)
 
     sigma = dolfinx.fem.Function(V, dtype=dolfinx.default_real_type())
@@ -26,13 +31,14 @@ def plot_native_ES():
     adios4dolfinx.read_function_from_legacy_h5(
         resultsdir / "results_current.xdmf", mesh.comm, sigma, group="sigma_ff", step=2
     )
-    grid.point_data["sigma_ff"] = sigma.x.array
+    grid.cell_data["sigma_ff"] = sigma.x.array
+    # grid.point_data["sigma_ff"] = sigma.x.array
     grid.set_active_scalars("sigma_ff")
 
     s = 125.0
     transform = pv.Transform().scale(s, s, s)
     grid_trans = transform.apply(grid)
-    grid_trans.translate((840.0, 1000, 0), inplace=True)
+    grid_trans.translate((910.0, 1000, 0), inplace=True)
 
     image = pv.read(imagefile)
     bounds = [200, 1800, 400, 1500, 0, 0]
@@ -42,16 +48,16 @@ def plot_native_ES():
     pv.start_xvfb()
     plotter = pv.Plotter()
     plotter.add_mesh(image, cmap="gray", show_scalar_bar=False)
-    cmap = plt.get_cmap("viridis")
+    cmap = plt.get_cmap(COLORMAP)
     plotter.add_mesh_clip_plane(
         grid_trans,
         normal=(0, -1, 0),
-        crinkle=True,
+        crinkle=CRINKLE,
         # tubing=False,
         outline_opacity=False,
         show_scalar_bar=True,
         cmap=cmap,
-        show_edges=True,
+        show_edges=SHOW_EDGES,
         lighting=False,
         # opacity=0.5,
         scalar_bar_args={
@@ -65,7 +71,7 @@ def plot_native_ES():
             "position_x": 0.1,
             "position_y": 0.85,
         },
-        clim=[0, 200.0],
+        clim=[0, 80.0],
     )
     widget = plotter.plane_widgets[0]
     widget.SetEnabled(not widget.GetEnabled())
@@ -93,9 +99,9 @@ def plot_transplanted_ES():
         resultsdir / "results_current.xdmf", comm, "/sigma_ff/sigma_ff_2/mesh"
     )
 
-    V = dolfinx.fem.functionspace(mesh, ("DG", 1))
+    V = dolfinx.fem.functionspace(mesh, ("DG", 0))
 
-    cells, types, x = dolfinx.plot.vtk_mesh(V)
+    cells, types, x = dolfinx.plot.vtk_mesh(mesh)
     grid = pv.UnstructuredGrid(cells, types, x)
 
     sigma = dolfinx.fem.Function(V, dtype=dolfinx.default_real_type())
@@ -103,13 +109,13 @@ def plot_transplanted_ES():
     adios4dolfinx.read_function_from_legacy_h5(
         resultsdir / "results_current.xdmf", mesh.comm, sigma, group="sigma_ff", step=2
     )
-    grid.point_data["sigma_ff"] = sigma.x.array
+    grid.cell_data["sigma_ff"] = sigma.x.array
     grid.set_active_scalars("sigma_ff")
 
     s = 100.0
     transform = pv.Transform().scale(s, s, s)
     grid_trans = transform.apply(grid)
-    grid_trans.translate((670.0, 650.0, 0), inplace=True)
+    grid_trans.translate((670.0, 670.0, 0), inplace=True)
 
     image = pv.read(imagefile)
     bounds = [100, 1200, 300, 920, 0, 0]
@@ -119,12 +125,12 @@ def plot_transplanted_ES():
     pv.start_xvfb()
     plotter = pv.Plotter()
     plotter.add_mesh(image, cmap="gray", show_scalar_bar=False)
-    cmap = plt.get_cmap("viridis")
+    cmap = plt.get_cmap(COLORMAP)
     plotter.add_mesh_clip_plane(
         grid_trans,
         normal=(0, -1, 0),
-        crinkle=True,
-        show_edges=True,
+        crinkle=CRINKLE,
+        show_edges=SHOW_EDGES,
         # tubing=False,
         outline_opacity=False,
         show_scalar_bar=True,
@@ -142,7 +148,7 @@ def plot_transplanted_ES():
             "position_x": 0.1,
             "position_y": 0.85,
         },
-        clim=[0, 200.0],
+        clim=[0, 80.0],
     )
     widget = plotter.plane_widgets[0]
     widget.SetEnabled(not widget.GetEnabled())
@@ -162,4 +168,4 @@ def plot_transplanted_ES():
 
 if __name__ == "__main__":
     plot_native_ES()
-    # plot_transplanted_ES()
+    plot_transplanted_ES()

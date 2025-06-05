@@ -57,14 +57,14 @@ class DataCollector:
         self.folder.mkdir(exist_ok=True, parents=True)
         self.path_reference = self.folder / "results_reference.xdmf"
         self.path_current = self.folder / "results_current.xdmf"
-        self.path_reference_smooth = self.folder / "results_reference_smooth.xdmf"
-        self.path_current_smooth = self.folder / "results_current_smooth.xdmf"
+        # self.path_reference_smooth = self.folder / "results_reference_smooth.xdmf"
+        # self.path_current_smooth = self.folder / "results_current_smooth.xdmf"
 
         self.functions = {
             "reference": {},
             "current": {},
-            "reference_smooth": {},
-            "current_smooth": {},
+            # "reference_smooth": {},
+            # "current_smooth": {},
         }
 
         self.reference_mesh = self.geo.mesh
@@ -81,7 +81,7 @@ class DataCollector:
                 dolfin.FunctionSpace(mesh, "CG", 1), name="u"
             )
 
-            V_DG2 = dolfin.FunctionSpace(mesh, "DG", 1)
+            V_DG2 = dolfin.FunctionSpace(mesh, "DG", 0)
             self.functions[label]["sigma_ff"] = dolfin.Function(V_DG2)
             self.functions[label]["sigma_ss"] = dolfin.Function(V_DG2)
             self.functions[label]["sigma_nn"] = dolfin.Function(V_DG2)
@@ -93,27 +93,28 @@ class DataCollector:
             self.functions[label]["E_nn"] = dolfin.Function(V_DG2)
             self.functions[label]["von_Mises"] = dolfin.Function(V_DG2)
 
-            V_smooth = dolfin.FunctionSpace(mesh, "DG", 1)
-            self.functions[f"{label}_smooth"]["sigma_ff"] = dolfin.Function(V_smooth)
-            self.functions[f"{label}_smooth"]["sigma_ss"] = dolfin.Function(V_smooth)
-            self.functions[f"{label}_smooth"]["sigma_nn"] = dolfin.Function(V_smooth)
-            self.functions[f"{label}_smooth"]["sigma_dev_ff"] = dolfin.Function(V_smooth)
-            self.functions[f"{label}_smooth"]["sigma_dev_ss"] = dolfin.Function(V_smooth)
-            self.functions[f"{label}_smooth"]["sigma_dev_nn"] = dolfin.Function(V_smooth)
-            self.functions[f"{label}_smooth"]["E_ff"] = dolfin.Function(V_smooth)
-            self.functions[f"{label}_smooth"]["E_ss"] = dolfin.Function(V_smooth)
-            self.functions[f"{label}_smooth"]["E_nn"] = dolfin.Function(V_smooth)
-            self.functions[f"{label}_smooth"]["von_Mises"] = dolfin.Function(V_smooth)
-            self.functions[f"{label}_smooth"]["p"] = dolfin.Function(V_smooth)
+            # V_smooth = dolfin.FunctionSpace(mesh, "DG", 0)
+            # self.functions[f"{label}_smooth"]["sigma_ff"] = dolfin.Function(V_smooth)
+            # self.functions[f"{label}_smooth"]["sigma_ss"] = dolfin.Function(V_smooth)
+            # self.functions[f"{label}_smooth"]["sigma_nn"] = dolfin.Function(V_smooth)
+            # self.functions[f"{label}_smooth"]["sigma_dev_ff"] = dolfin.Function(V_smooth)
+            # self.functions[f"{label}_smooth"]["sigma_dev_ss"] = dolfin.Function(V_smooth)
+            # self.functions[f"{label}_smooth"]["sigma_dev_nn"] = dolfin.Function(V_smooth)
+            # self.functions[f"{label}_smooth"]["E_ff"] = dolfin.Function(V_smooth)
+            # self.functions[f"{label}_smooth"]["E_ss"] = dolfin.Function(V_smooth)
+            # self.functions[f"{label}_smooth"]["E_nn"] = dolfin.Function(V_smooth)
+            # self.functions[f"{label}_smooth"]["von_Mises"] = dolfin.Function(V_smooth)
+            # self.functions[f"{label}_smooth"]["p"] = dolfin.Function(V_smooth)
 
         self.proj = utils.Projector(self.functions["reference"]["sigma_ff"].function_space())
 
     def save(self, ti: float):
         u, p = self.problem.state.split(deepcopy=True)
         F = pulse.kinematics.DeformationGradient(u)
+        Fe = self.material.Fe(F)
         sigma = self.material.CauchyStress(F, p)
         sigma_dev = sigma - (1 / 3) * ufl.tr(sigma) * ufl.Identity(3)
-        E = pulse.kinematics.GreenLagrangeStrain(F)
+        E = pulse.kinematics.GreenLagrangeStrain(Fe)
         f = F * self.geo.f0
         s = F * self.geo.s0
         n = F * self.geo.n0
@@ -145,14 +146,14 @@ class DataCollector:
         self.proj.project(self.functions["reference"]["von_Mises"], utils.von_mises(sigma))
 
         # Then smooth the values
-        for name, f in self.functions["reference_smooth"].items():
-            f.interpolate(SmoothLV(self.functions["reference"][name]))
+        # for name, f in self.functions["reference_smooth"].items():
+        #     f.interpolate(SmoothLV(self.functions["reference"][name]))
 
         # Then transfer to the current mesh
         for name, f in self.functions["current"].items():
             f.vector()[:] = self.functions["reference"][name].vector()[:]
-        for name, f in self.functions["current_smooth"].items():
-            f.vector()[:] = self.functions["reference_smooth"][name].vector()[:]
+        # for name, f in self.functions["current_smooth"].items():
+        #     f.vector()[:] = self.functions["reference_smooth"][name].vector()[:]
 
         # Move mesh
         u_int = dolfin.interpolate(self.functions["current"]["u"], self.V_int)
@@ -167,8 +168,8 @@ class DataCollector:
         for label, path in [
             ("reference", self.path_reference),
             ("current", self.path_current),
-            ("reference_smooth", self.path_reference_smooth),
-            ("current_smooth", self.path_current_smooth),
+            # ("reference_smooth", self.path_reference_smooth),
+            # ("current_smooth", self.path_current_smooth),
         ]:
             with dolfin.XDMFFile(path.as_posix()) as xdmf:
                 if label in ["reference", "current"]:
@@ -286,11 +287,11 @@ def main(
         "a_fs": 0.0,
         "b_fs": 0.0,
     }
-    gamma = dolfin.Constant(0.0)
-    activation = gamma
+    Ta = dolfin.Constant(0.0)
+    activation = Ta
 
     material = pulse.HolzapfelOgden(
-        active_model="active_strain",
+        active_model="active_stress",
         activation=activation,
         parameters=matparams,
         f0=geometry.f0,
@@ -302,6 +303,7 @@ def main(
     spring = dolfin.Constant(500 / m2mm)  # kPa/mm
     robin_bc = [
         pulse.RobinBC(value=dolfin.Constant(spring), marker=geo.markers["EPI"][0]),
+        # pulse.RobinBC(value=dolfin.Constant(spring), marker=geo.markers["BASE"][0]),
     ]
 
     # LV Pressure
@@ -336,20 +338,20 @@ def main(
         ESP = 13.5
         target_EDV = 115.8
         target_ESV = 52.2
-        gamma_ES = 0.303
+        Ta_ES = 124.0
 
     elif case == "transplanted":
         EDP = 1.0
         ESP = 8.0
         target_EDV = 37.4
         target_ESV = 34.1
-        gamma_ES = 0.15
+        Ta_ES = 39.5
 
-    gammas = [0.0, 0.0, gamma_ES]
+    Tas = [0.0, 0.0, Ta_ES]
     pressures = [0.0, EDP, ESP]
     volumes = [geometry.cavity_volume(u=problem.state.split()[0])]
 
-    np.save(output_folder / "gammas.npy", gammas)
+    np.save(output_folder / "Tas.npy", Tas)
     np.save(output_folder / "pressures.npy", pressures)
 
     data_collector.save(0.0)
@@ -365,19 +367,19 @@ def main(
     EDV = geometry.cavity_volume(u=problem.state.split()[0])
     volumes.append(EDV)
     data_collector.save(1.0)
-    print(f"EDP: {EDP} kPa, EDV: {EDV} uL, target EDV: {target_EDV}, gamma: {float(gamma)}")
+    print(f"EDP: {EDP} kPa, EDV: {EDV} uL, target EDV: {target_EDV}, Ta: {float(Ta)}")
     # exit()
     # ES
     pulse.iterate.iterate(
         problem,
-        (lvp, gamma),
-        (ESP, gamma_ES),
+        (lvp, Ta),
+        (ESP, Ta_ES),
         initial_number_of_steps=1000,
         continuation=True,
     )
     ESV = geometry.cavity_volume(u=problem.state.split()[0])
     volumes.append(ESV)
-    print(f"ESP: {ESP} kPa, ESV: {ESV} uL, target ESV: {target_ESV}, gamma: {float(gamma)}")
+    print(f"ESP: {ESP} kPa, ESV: {ESV} uL, target ESV: {target_ESV}, Ta: {float(Ta)}")
     data_collector.save(2.0)
 
     np.save(output_folder / "volumes.npy", volumes)
