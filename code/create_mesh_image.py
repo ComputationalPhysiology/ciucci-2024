@@ -38,10 +38,10 @@ def plot_native_ES():
     s = 125.0
     transform = pv.Transform().scale(s, s, s)
     grid_trans = transform.apply(grid)
-    grid_trans.translate((910.0, 1000, 0), inplace=True)
+    grid_trans.translate((920.0, 1000, 0), inplace=True)
 
     image = pv.read(imagefile)
-    bounds = [200, 1800, 400, 1500, 0, 0]
+    bounds = [150, 1880, 380, 1680, 0, 0]
     image = image.clip_box(bounds, invert=False)
 
     # # Create a PyVista plotter
@@ -81,9 +81,9 @@ def plot_native_ES():
     #     (0.0, 0.0, 1.0),
     # ]
     plotter.camera_position = [
-        (-27.478591656723232, 2730.8560998239436, 620.045130319616),
+        (-391.72899557008725, 3105.815945921396, 482.1905991953405),
         (1000.0, 950.0, -0.4971771240234375),
-        (0.24374756816294021, -0.19071166164668962, 0.9509028263322237),
+        (0.11554103254627512, -0.14541487259854116, 0.9826010302382604),
     ]
 
     plotter.save_graphic(figname)
@@ -112,19 +112,26 @@ def plot_transplanted_ES():
     grid.cell_data["sigma_ff"] = sigma.x.array
     grid.set_active_scalars("sigma_ff")
 
-    s = 100.0
+    s = 125.0
+
+    x_offset = 70
+    y_offset = 70
+
     transform = pv.Transform().scale(s, s, s)
     grid_trans = transform.apply(grid)
-    grid_trans.translate((670.0, 670.0, 0), inplace=True)
+    grid_trans.translate((940.0 + x_offset, 970.0 + y_offset, 0), inplace=True)
 
     image = pv.read(imagefile)
-    bounds = [100, 1200, 300, 920, 0, 0]
+    bounds = [80, 1240, 50, 930, 0, 0]
     image = image.clip_box(bounds, invert=False)
+    transform_img = pv.Transform().scale(1.55, 1.55, 1.55)
+    image_trans = transform_img.apply(image)
+    image_trans.translate((x_offset, y_offset, 0), inplace=True)
 
     # # Create a PyVista plotter
     pv.start_xvfb()
     plotter = pv.Plotter()
-    plotter.add_mesh(image, cmap="gray", show_scalar_bar=False)
+    plotter.add_mesh(image_trans, cmap="gray", show_scalar_bar=False)
     cmap = plt.get_cmap(COLORMAP)
     plotter.add_mesh_clip_plane(
         grid_trans,
@@ -158,14 +165,19 @@ def plot_transplanted_ES():
     #     (-0.4082482904638644, -0.4082482904638633, 0.8164965809277254),
     # ]
 
+    # plotter.camera_position = [
+    #     (40.96161473111009, 2162.8016595842296, 593.1096355196673),
+    #     (660.0, 490.0, 0.1694488525390625),
+    #     (0.14390229106881514, -0.28288076991887, 0.948298792910364),
+    # ]
     plotter.camera_position = [
-        (-97.50252570755485, 1647.5530835985949, 401.1000330530449),
-        (776.5, 538.5, 0.012895350782002879),
-        (0.14421878471400296, -0.23405925157590624, 0.9614661766735961),
+        (-391.72899557008725, 3105.815945921396, 482.1905991953405),
+        (1000.0, 950.0, -0.4971771240234375),
+        (0.11554103254627512, -0.14541487259854116, 0.9826010302382604),
     ]
     plotter.save_graphic(figname)
 
 
 if __name__ == "__main__":
-    plot_native_ES()
+    # plot_native_ES()
     plot_transplanted_ES()
