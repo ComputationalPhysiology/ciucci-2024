@@ -145,15 +145,9 @@ class DataCollector:
         )
         self.proj.project(self.functions["reference"]["von_Mises"], utils.von_mises(sigma))
 
-        # Then smooth the values
-        # for name, f in self.functions["reference_smooth"].items():
-        #     f.interpolate(SmoothLV(self.functions["reference"][name]))
-
         # Then transfer to the current mesh
         for name, f in self.functions["current"].items():
             f.vector()[:] = self.functions["reference"][name].vector()[:]
-        # for name, f in self.functions["current_smooth"].items():
-        #     f.vector()[:] = self.functions["reference_smooth"][name].vector()[:]
 
         # Move mesh
         u_int = dolfin.interpolate(self.functions["current"]["u"], self.V_int)
@@ -168,8 +162,6 @@ class DataCollector:
         for label, path in [
             ("reference", self.path_reference),
             ("current", self.path_current),
-            # ("reference_smooth", self.path_reference_smooth),
-            # ("current_smooth", self.path_current_smooth),
         ]:
             with dolfin.XDMFFile(path.as_posix()) as xdmf:
                 if label in ["reference", "current"]:
@@ -287,11 +279,11 @@ def main(
         "a_fs": 0.0,
         "b_fs": 0.0,
     }
-    Ta = dolfin.Constant(0.0)
-    activation = Ta
+    gamma = dolfin.Constant(0.0)
+    activation = gamma
 
     material = pulse.HolzapfelOgden(
-        active_model="active_stress",
+        active_model="active_strain",
         activation=activation,
         parameters=matparams,
         f0=geometry.f0,
@@ -338,20 +330,23 @@ def main(
         ESP = 13.5
         target_EDV = 115.8
         target_ESV = 52.2
-        Ta_ES = 124.0
+        gamma_ES = 0.303
+        # gamma_ES = 124.0
 
     elif case == "transplanted":
         EDP = 1.0
         ESP = 8.0
         target_EDV = 37.4
         target_ESV = 34.1
-        Ta_ES = 39.5
+        # gamma_ES = 0.165
+        gamma_ES = 0.168
+        # gamma_ES = 39.5
 
-    Tas = [0.0, 0.0, Ta_ES]
+    gammas = [0.0, 0.0, gamma_ES]
     pressures = [0.0, EDP, ESP]
     volumes = [geometry.cavity_volume(u=problem.state.split()[0])]
 
-    np.save(output_folder / "Tas.npy", Tas)
+    np.save(output_folder / "gammas.npy", gammas)
     np.save(output_folder / "pressures.npy", pressures)
 
     data_collector.save(0.0)
@@ -367,19 +362,19 @@ def main(
     EDV = geometry.cavity_volume(u=problem.state.split()[0])
     volumes.append(EDV)
     data_collector.save(1.0)
-    print(f"EDP: {EDP} kPa, EDV: {EDV} uL, target EDV: {target_EDV}, Ta: {float(Ta)}")
-    # exit()
+    print(f"EDP: {EDP} kPa, EDV: {EDV} uL, target EDV: {target_EDV}, gamma: {float(gamma)}")
+
     # ES
     pulse.iterate.iterate(
         problem,
-        (lvp, Ta),
-        (ESP, Ta_ES),
+        (lvp, gamma),
+        (ESP, gamma_ES),
         initial_number_of_steps=1000,
         continuation=True,
     )
     ESV = geometry.cavity_volume(u=problem.state.split()[0])
     volumes.append(ESV)
-    print(f"ESP: {ESP} kPa, ESV: {ESV} uL, target ESV: {target_ESV}, Ta: {float(Ta)}")
+    print(f"ESP: {ESP} kPa, ESV: {ESV} uL, target ESV: {target_ESV}, gamma: {float(gamma)}")
     data_collector.save(2.0)
 
     np.save(output_folder / "volumes.npy", volumes)

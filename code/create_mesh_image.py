@@ -38,7 +38,7 @@ def plot_native_ES():
     s = 125.0
     transform = pv.Transform().scale(s, s, s)
     grid_trans = transform.apply(grid)
-    grid_trans.translate((920.0, 1000, 0), inplace=True)
+    grid_trans.translate((840.0, 1000, 0), inplace=True)
 
     image = pv.read(imagefile)
     bounds = [150, 1880, 380, 1680, 0, 0]
@@ -119,7 +119,7 @@ def plot_transplanted_ES():
 
     transform = pv.Transform().scale(s, s, s)
     grid_trans = transform.apply(grid)
-    grid_trans.translate((940.0 + x_offset, 970.0 + y_offset, 0), inplace=True)
+    grid_trans.translate((930.0 + x_offset, 970.0 + y_offset, 0), inplace=True)
 
     image = pv.read(imagefile)
     bounds = [80, 1240, 50, 930, 0, 0]
@@ -179,5 +179,5 @@ def plot_transplanted_ES():
 
 
 if __name__ == "__main__":
-    # plot_native_ES()
-    plot_transplanted_ES()
+    plot_native_ES()
+    # plot_transplanted_ES()

@@ -318,7 +318,7 @@ def postprocess_lv_ES(nativedir, transplanteddir, figdir):
         color="black",
     )
     caplines[0].set_marker("_")
-    caplines[0].set_markersize(20)
+    caplines[0].set_markersize(30)
     bottom_inds = [1, 2, 4, 5]
 
     plotline, caplines, barlinecols = ax.errorbar(
@@ -331,7 +331,7 @@ def postprocess_lv_ES(nativedir, transplanteddir, figdir):
         color="black",
     )
     caplines[0].set_marker("_")
-    caplines[0].set_markersize(20)
+    caplines[0].set_markersize(30)
 
     ax.get_legend().set_title(None)
     ax.set_xlabel("")

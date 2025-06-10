@@ -108,6 +108,8 @@ def preprocess_lv(
         mu_base_endo=mu_base_endo,
         mu_base_epi=mu_base_epi,
         create_fibers=True,
+        fiber_angle_endo=-60,
+        fiber_angle_epi=+60,
         fiber_space="DG_1",
     )
 
