@@ -38,65 +38,8 @@ def load_lv_arrs(
     V_DG2 = dolfin.FunctionSpace(geo.mesh, "DG", 1)
     V_CG1 = dolfin.FunctionSpace(geo.mesh, "CG", 1)
 
-    x, y, z = V_DG2.tabulate_dof_coordinates().T
-    r = np.sqrt(y**2 + z**2)
-
-    if "transplanted" in str(data_path):
-        r_short_endo = 1.0
-        width = 4.0
-        z_low = -0.3
-        z_high = 0.3
-    elif "native" in str(data_path):
-        r_short_endo = 1.0
-        width = 4.0
-        z_low = -0.5
-        z_high = 0.5
-
-    r_low = r_short_endo + width * 0.0
-    r_high = r_short_endo + width * 1.0
-
-    dofs = np.where(
-        np.logical_and(
-            np.logical_and(r >= r_low, r <= r_high),
-            np.logical_and(x >= z_low, x <= z_high),
-        )
-    )[0]
-
-    class Subdomain(dolfin.SubDomain):
-        def inside(self, x, on_boundary):
-            r2 = x[1] ** 2 + x[2] ** 2
-            z = x[0]
-            # breakpoint()
-            # tol = 1e-14
-            # return on_boundary and abs(x[0]) < tol
-            # return np.logical_and(z >= z_low, z <= z_high)
-
-            return np.logical_and(
-                np.logical_and(r2 >= r_low**2, r2 <= r_high**2),
-                np.logical_and(z >= z_low, z <= z_high),
-            )
-
-    subdomain_data = dolfin.MeshFunction("size_t", geo.mesh, 3)
-    subdomain_data.set_all(0)
-    # Mark subdomain_data with numbers 0 and 1
-    subdomain = Subdomain()
-    subdomain.mark(subdomain_data, 1)
-    with dolfin.XDMFFile((output.parent / "mid.xdmf").as_posix()) as xdmf:
-        xdmf.write(subdomain_data)
-
-    dx = dolfin.Measure("dx", domain=geo.mesh, subdomain_data=subdomain_data)
-
-    volume = dolfin.assemble(dolfin.Constant(1) * dx(1))
-    volume_all = dolfin.assemble(dolfin.Constant(1) * dx)
-    # breakpoint()
-    # breakpoint()
-    print(len(dofs), "dofs", r.shape)
-    #  dofs = np.where(
-    #     np.logical_and(
-    #         np.logical_and(r >= r_low, r <= r_high),
-    #         np.logical_and(z >= -0.5, z <= 0.5),
-    #     )
-    # )[0]
+    dx = dolfin.Measure("dx", domain=geo.mesh)
+    volume = dolfin.assemble(dolfin.Constant(1) * dx)
 
     aggregator = sns._statistics.EstimateAggregator("mean", ("ci", 95), n_boot=1000, seed=None)
 
@@ -107,7 +50,6 @@ def load_lv_arrs(
 
     with dolfin.XDMFFile(output.as_posix()) as xdmf:
         for ti in range(len(gammas)):
-            # xdmf.read_checkpoint(u, "u", ti)
             for name in [
                 "sigma_ff",
                 "sigma_ss",
@@ -122,16 +64,10 @@ def load_lv_arrs(
             ]:
                 f = p if name == "p" else f_
                 xdmf.read_checkpoint(f, name, ti)
-                # f_arr = f.vector().get_local()
-                # if name != "p":
-                #     f_arr = f_arr[dofs]
                 x = aggregator(pd.DataFrame({"x": f.vector().get_local()}), "x")
 
-                mean = dolfin.assemble(f * dx(1)) / volume
-                std = dolfin.assemble(dolfin.sqrt((f - mean) ** 2) * dx(1)) / volume
-
-                mean_all = dolfin.assemble(f * dx) / volume_all
-                std_all = dolfin.assemble(dolfin.sqrt((f - mean_all) ** 2) * dx) / volume_all
+                mean = dolfin.assemble(f * dx) / volume
+                std = dolfin.assemble(dolfin.sqrt((f - mean) ** 2) * dx) / volume
 
                 data.extend(
                     [
@@ -140,8 +76,6 @@ def load_lv_arrs(
                             "name": name,
                             "mean": mean,
                             "std": std,
-                            "mean_all": mean_all,
-                            "std_all": std_all,
                             "gamma": gammas[ti],
                             "pressure": pressures[ti],
                             "volume": volumes[ti],
@@ -167,8 +101,7 @@ def postprocess_lv(resultsdir, figdir, mesh_folder, print_stats=False):
     figdir.mkdir(exist_ok=True, parents=True)
 
     data_path = resultsdir / "results.csv"
-    if True:  # not data_path.is_file():
-        load_lv_arrs(data_path, output, gammas, pressures, volumes, mesh_folder=mesh_folder)
+    load_lv_arrs(data_path, output, gammas, pressures, volumes, mesh_folder=mesh_folder)
 
     if print_stats:
         try:
@@ -300,11 +233,8 @@ def postprocess_lv_ES(nativedir, transplanteddir, figdir):
     )
 
     y_mean = df1_stress["ci_value"].values
-    # y_std = df1_stress["std_all"].values
     y_max = np.array([ymax - yi for ymax, yi in zip(df1_stress["ci_max"].values, y_mean)])
     y_min = np.array([yi - ymin for ymin, yi in zip(df1_stress["ci_min"].values, y_mean)])
-    # y_mean = df1_stress["mean_all"].values
-    # y_std = df1_stress["std_all"].values
     x = np.array([-0.25, 0.0, 0.25, 0.75, 1.0, 1.25])
     top_inds = [0, 3]
 
