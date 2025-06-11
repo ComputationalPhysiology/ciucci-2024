@@ -115,28 +115,71 @@ python3 main.py postprocess-cylinder-twitch -i meshes/cylinder -r results/cylind
 
 
 ### Preprocessing
+
+#### Native
+
 ```
-python3 main.py preprocess-lv -o meshes/lv --psize-ref 3.0
+python3 main.py preprocess-lv -o meshes/native -c native
+```
+
+#### Transplanted
+```
+python3 main.py preprocess-lv -o meshes/transplanted -c transplanted
 ```
 
 ### Running simulations
+
+#### Native
 ```
-python3 main.py run-lv -i meshes/lv -o results/lv
+python3 main.py run-lv -i meshes/native -c native -o results/native
 ```
 
-### Postprocessing
+When running the simulations the following files will be created in the output folder
+
 ```
-python3 main.py postprocess-lv -i meshes/lv -r results/lv/ -o figures/lv
+native
+├── gammas.npy
+├── pressures.npy
+├── results_current.h5
+├── results_current.xdmf
+├── results_current_smooth.h5
+├── results_current_smooth.xdmf
+├── results_reference.h5
+├── results_reference.xdmf
+├── results_reference_smooth.h5
+├── results_reference_smooth.xdmf
+└── volumes.npy
+```
+The xdmf files are files that can be opened in Paraview. The label `reference` refers to the solutions are stored on the reference mesh, while in the file with the label `current` the mesh has been updated to the current configuration. For the results with the label `smooth` we have smoothed the results using a Gaussian filter and interpolated into a first order Lagrange element function space. The files `gammas.npy` and `pressures.npy` contain the values of the gamma and pressure for each time step. The file `volumes.npy` contains the volume of the LV at each time step.
+
+#### Transplanted
+```
+python3 main.py run-lv -i meshes/transplanted -c transplanted -o results/transplanted
+```
+
+
+### Postprocessing
+
+#### Native
+```
+python3 main.py postprocess-lv -i meshes/native -r results/native -o figures/native
+```
+
+#### Transplanted
+
+```
+python3 main.py postprocess-lv -i meshes/transplanted -r results/transplanted -o figures/transplanted
 ```
 Get stats using
 ```
-python3 main.py postprocess-lv -i meshes/lv -r results/lv/ -o figures/lv --print-stats
-```
-Create paraview files with stresses imposed on deformed geometry
-```
-python3 main.py postprocess-lv -i meshes/lv -r results/lv/ -o figures/lv --create-paraview
+python3 main.py postprocess-lv -i meshes/transplanted -r results/transplanted -o figures/transplanted --print-stats
 ```
 
+### Comparison for end-systole
+
+```
+python3 main.py postprocess-lv-ES -n results/native -t results/transplanted -o figures
+```
 
 
 ## Citation

@@ -25,7 +25,7 @@ class Projector:
         """
         u = dolfin.TrialFunction(V)
         self._v = dolfin.TestFunction(V)
-        self._dx = dolfin.Measure("dx", domain=V.mesh())
+        self._dx = dolfin.Measure("dx", domain=V.mesh(), metadata={"quadrature_degree": 6})
         self._b = dolfin.Function(V)
         self._A = dolfin.assemble(ufl.inner(u, self._v) * self._dx)
         lu_methods = dolfin.lu_solver_methods().keys()

@@ -8,13 +8,18 @@ def add_preprocess_lv_arguments(parser: argparse.ArgumentParser) -> None:
         "-o",
         "--mesh-folder",
         type=Path,
-        default=Path.cwd().parent / "meshes-lv",
+        default=Path.cwd().parent / "meshes/lv-native",
     )
-    parser.add_argument("--r-short-endo", type=float, default=4.0)
-    parser.add_argument("--r-long-endo", type=float, default=8.0)
-    parser.add_argument("--r-short-epi", type=float, default=5.5)
-    parser.add_argument("--r-long-epi", type=float, default=9.5)
-    parser.add_argument("--psize-ref", type=float, default=0.5)
+    parser.add_argument(
+        "-c", "--case", type=str, default="native", choices=["native", "transplanted"]
+    )
+    parser.add_argument(
+        "-p",
+        "--psize-ref",
+        type=float,
+        default=None,
+        help="Reference size for mesh generation, if not given, use default value for the case",
+    )
 
 
 def add_preprocess_cylinder_arguments(parser: argparse.ArgumentParser) -> None:
@@ -41,6 +46,9 @@ def add_run_lv_arguments(parser: argparse.ArgumentParser) -> None:
         "--output-folder",
         type=Path,
         default=Path.cwd().parent / "results-lv",
+    )
+    parser.add_argument(
+        "-c", "--case", type=str, default="native", choices=["native", "transplanted"]
     )
 
 
@@ -121,10 +129,25 @@ def add_postprocess_lv_arguments(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Print statistics",
     )
+
+
+def add_postprocess_lv_ES_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
-        "--create-paraview",
-        action="store_true",
-        help="Create Paraview files",
+        "-n",
+        "--nativedir",
+        type=Path,
+    )
+    parser.add_argument(
+        "-t",
+        "--transplanteddir",
+        type=Path,
+        default=Path.cwd().parent / "meshes-lv",
+    )
+    parser.add_argument(
+        "-o",
+        "--figdir",
+        type=Path,
+        default=Path.cwd().parent / "figures-lv",
     )
 
 
@@ -213,6 +236,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     postprocess_lv_parser = subparsers.add_parser("postprocess-lv", help="Postprocess LV results")
     add_postprocess_lv_arguments(postprocess_lv_parser)
 
+    # Postprocess LV ES
+    postprocess_lv_ES_parser = subparsers.add_parser(
+        "postprocess-lv-ES", help="Postprocess LV ES results"
+    )
+    add_postprocess_lv_ES_arguments(postprocess_lv_ES_parser)
+
     # Postprocess cylinder
     postprocess_cylinder_parser = subparsers.add_parser(
         "postprocess-cylinder", help="Postprocess cylinder results"
@@ -264,6 +293,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         import postprocess_lv
 
         postprocess_lv.postprocess_lv(**args)
+
+    elif cmd == "postprocess-lv-ES":
+        import postprocess_lv
+
+        postprocess_lv.postprocess_lv_ES(**args)
 
     elif cmd == "postprocess-cylinder":
         import postprocess_cylinder

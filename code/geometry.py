@@ -1,7 +1,9 @@
 from pathlib import Path
 import typing
+import shutil
 import json
 
+import math
 import dolfin
 import meshio
 import pulse
@@ -21,7 +23,6 @@ def create_cylinder_mesh(
     gmsh.model.occ.synchronize()
 
     surfaces = gmsh.model.occ.getEntities(dim=2)
-    # inlet_marker, outlet_marker, wall_marker, obstacle_marker = 1, 3, 5, 7
     right = 1
     left = 2
     sides = 3
@@ -55,29 +56,76 @@ def create_cylinder_mesh(
 
 
 def preprocess_lv(
-    mesh_folder: Path,
-    r_short_endo=4.0,
-    r_long_endo=8.0,
-    r_short_epi=5.5,
-    r_long_epi=9.5,
-    psize_ref=0.5,
-    create_fibers=True,
-    fiber_space="Quadrature_6",
-    **kwargs,
+    mesh_folder: Path = Path("meshes/lv"),
+    case: typing.Literal["native", "transplanted"] = "native",
+    psize_ref: float | None = None,
 ):
-    cardiac_geometries.create_lv_ellipsoid(
+    # Volumes are calibrated by matching end-diastolic volumes
+    # given in the spreadsheet.
+    if case == "native":
+        if psize_ref is None:
+            psize_ref: float = 0.3  # type: ignore
+        r_long_endo = 4.519
+        r_short_endo = 2.169
+
+        width = 0.55
+
+        r_long_epi = r_long_endo + width
+        r_short_epi = r_short_endo + width
+
+        print(f"r_long_epi: {r_long_epi}, r_short_epi: {r_short_epi}")
+        print(f"r_long_endo: {r_long_endo}, r_short_endo: {r_short_endo}")
+
+        mu_base_endo = -math.acos(12 / 17)
+        mu_base_epi = -math.acos(15 / 20)
+
+    elif case == "transplanted":
+        if psize_ref is None:
+            psize_ref: float = 0.25  # type: ignore
+        r_long_endo = 3.03
+        r_short_endo = 1.545
+
+        width = 0.5
+
+        r_long_epi = r_long_endo + width
+        r_short_epi = r_short_endo + width
+        print(f"r_long_epi: {r_long_epi}, r_short_epi: {r_short_epi}")
+        print(f"r_long_endo: {r_long_endo}, r_short_endo: {r_short_endo}")
+
+        # exit()
+        mu_base_endo = -math.acos(12 / 17)
+        mu_base_epi = -math.acos(15 / 20)
+
+    else:
+        raise ValueError(f"Unknown case {case}")
+
+    shutil.rmtree(mesh_folder, ignore_errors=True)
+
+    geo = cardiac_geometries.create_lv_ellipsoid(
         mesh_folder,
         r_short_endo=r_short_endo,
         r_long_endo=r_long_endo,
         r_short_epi=r_short_epi,
         r_long_epi=r_long_epi,
         psize_ref=psize_ref,
-        create_fibers=create_fibers,
-        fiber_space=fiber_space,
+        mu_base_endo=mu_base_endo,
+        mu_base_epi=mu_base_epi,
+        create_fibers=True,
+        fiber_angle_endo=-60,
+        fiber_angle_epi=+60,
+        fiber_space="DG_1",
     )
 
+    geometry = pulse.HeartGeometry(
+        mesh=geo.mesh,
+        markers=geo.markers,
+        marker_functions=pulse.MarkerFunctions(ffun=geo.ffun),
+        microstructure=None,
+    )
+    print(f"Cavity volume : {geometry.cavity_volume()}")
 
-def get_lv_geometry(mesh_folder: Path = Path("meshes/lv")):
+
+def get_lv_geometry(mesh_folder: Path = Path("meshes/lv-native")):
     if not mesh_folder.is_dir():
         raise FileNotFoundError(f"Folder {mesh_folder} does not exist")
 
