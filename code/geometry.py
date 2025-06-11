@@ -58,11 +58,13 @@ def create_cylinder_mesh(
 def preprocess_lv(
     mesh_folder: Path = Path("meshes/lv"),
     case: typing.Literal["native", "transplanted"] = "native",
+    psize_ref: float | None = None,
 ):
     # Volumes are calibrated by matching end-diastolic volumes
     # given in the spreadsheet.
     if case == "native":
-        psize_ref: float = 0.3
+        if psize_ref is None:
+            psize_ref: float = 0.3  # type: ignore
         r_long_endo = 4.519
         r_short_endo = 2.169
 
@@ -78,7 +80,8 @@ def preprocess_lv(
         mu_base_epi = -math.acos(15 / 20)
 
     elif case == "transplanted":
-        psize_ref: float = 0.25  # type: ignore
+        if psize_ref is None:
+            psize_ref: float = 0.25  # type: ignore
         r_long_endo = 3.03
         r_short_endo = 1.545
 
