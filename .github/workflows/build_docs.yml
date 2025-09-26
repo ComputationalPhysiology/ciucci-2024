@@ -29,11 +29,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
       - name: Download docs artifact
         # docs artifact is uploaded by build-docs job
         uses: actions/download-artifact@v4
@@ -41,11 +36,16 @@ jobs:
           name: figures
           path: "./report/figures"
 
-      - name: Install myst-cli
-        run: npm install -g mystmd
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install MyST
+        run: python3 -m pip install mystmd
 
       - name: Build static html
-        run: myst build --html
+        run:  myst build --ci --html
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

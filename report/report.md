@@ -104,7 +104,7 @@ Showing the orientation of circular components
 
 ### LV domain
 
-We will also test out an idealized LV domain generated using [`cardiac-geometries`](https://computationalphysiology.github.io/cardiac_geometries)
+We will also test out an idealized LV domain generated using [`cardiac-geometries`](https://computationalphysiology.github.io/cardiac-geometries)
 
 ```{figure} ./figures_static/lv/mesh.png
 :name: lv_mesh
@@ -298,8 +298,8 @@ Resulting length of the cylinder in relaxed and contracted state for spring cons
 
 
 ```{figure} figures/cylinder/frac.svg
-:name: spring_length
-:alt: spring Length
+:name: frac
+:alt: Fractional shortening
 :align: center
 
 Fractional shortening
@@ -324,8 +324,8 @@ Resulting stress the cylinder in the contracted state for different spring const
 
 
 ```{figure} figures/cylinder/stress_dev.svg
-:name: spring_stress
-:alt: spring Stress
+:name: spring_stress_dev
+:alt: spring Stress deviatoric
 :align: center
 
 Resulting deviatoric and hydrostatic stress the cylinder in the contracted state for different spring constants in the longitudinal $\sigma_{xx}$, circumferential $\sigma_{c}$ and radial $\sigma_r$ direction
@@ -368,8 +368,8 @@ Resulting length of the cylinder in relaxed and contracted state for spring cons
 
 
 ```{figure} figures/cylinder-twitch/frac.svg
-:name: cylinder_twitch_length
-:alt: cylinder_twitch Length
+:name: cylinder_frac
+:alt: cylinder Fractional shortening
 :align: center
 
 Fractional shortening
@@ -418,8 +418,8 @@ Stress in the fiber, sheet and sheet normal direction for the unloaded and loade
 
 
 ```{figure} figures/lv/stress_dev.svg
-:name: lv_stress
-:alt: LV stress
+:name: lv_stress_dev
+:alt: LV stress deviatoric
 :align: center
 
 Stress in the fiber, sheet and sheet normal direction for the unloaded and loaded state

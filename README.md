@@ -1,4 +1,4 @@
-# Material from Ciucci 2024
+# Material from Ciucci 2025
 
 This repository contains the source code to reproduce the modeling results from the paper
 > Paper here
@@ -6,9 +6,9 @@ This repository contains the source code to reproduce the modeling results from 
 
 
 ## Reproducible results
-You can find a report of the results by going to the repository homepage at <https://computationalphysiology.github.io/ciucci-2024/myst/report-1>.
+You can find a report of the results by going to the repository homepage at <https://computationalphysiology.github.io/ciucci-2025/report>.
 
-Note that the results displayed here are re-generated every time a push is made to the repository (see https://github.com/ComputationalPhysiology/ciucci-2024/actions/workflows/deploy_docs.yml). Note that all figures are also uploaded as artifacts during the build.
+Note that the results displayed here are re-generated every time a push is made to the repository (see https://github.com/ComputationalPhysiology/ciucci-2025/actions/workflows/deploy_docs.yml). Note that all figures are also uploaded as artifacts during the build.
 
 Also note that the results from the paper are run on a finer mesh than those displayed in the documentation.
 
@@ -16,11 +16,11 @@ Also note that the results from the paper are run on a finer mesh than those dis
 ## Install dependencies
 To run the code in this repo you need FEniCS and gmsh with OpenCascade installed. The easiest way to do this is to either use the provided docker image, i.e
 ```
-docker pull ghcr.io/computationalphysiology/ciucci-2024:latest
+docker pull ghcr.io/computationalphysiology/ciucci-2025:latest
 ```
 You can create a new container using the command
 ```
-docker run --name ciucci -w /home/shared -v $PWD:/home/shared -it ghcr.io/computationalphysiology/ciucci-2024:latest
+docker run --name ciucci -w /home/shared -v $PWD:/home/shared -it ghcr.io/computationalphysiology/ciucci-2025:latest
 ```
 which will also share your current directory with the container. If you are interested you can also check out the [Dockerfile](Dockerfile) if you want to know how the image was created.
 
@@ -32,7 +32,7 @@ There are three types of simulation scripts.
 2. A contraction cylinder with a full twitch
 3. An unloaded (zero pressure) and loaded (pressure = 15 kPA) contracting left ventricle.
 
-We refer to the [documentation](https://computationalphysiology.github.io/ciucci-2024/myst/report-1) for more information about the models and numerical experiments.
+We refer to the [documentation](https://computationalphysiology.github.io/ciucci-2025/report) for more information about the models and numerical experiments.
 
 The main script for running all the commands are located inside the `code` directory and you should first make sure to navigate to this directory, i.e
 ```

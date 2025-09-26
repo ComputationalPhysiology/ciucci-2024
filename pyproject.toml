@@ -3,8 +3,8 @@ requires = ["setuptools>=64.4.0", "wheel", "pip>=22.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ciucci-2024"
-version = "1.0.0"
+name = "ciucci-2025"
+version = "2.0.0"
 dependencies = [
     "h5py",
     "cardiac-geometries>=0.11.0",
