@@ -1,8 +1,7 @@
-# Material from Ciucci 2025
+# Source code for "Mechanical load inhibits cancer growth in mouse and human hearts"
 
 This repository contains the source code to reproduce the modeling results from the paper
-> Paper here
-
+> Ciucci, Giulio, et al. ‘Mechanical Load Inhibits Cancer Growth in Mouse and Human Hearts’. Science, vol. 392, no. 6796, 2026, p. eads9412, https://doi.org/10.1126/science.ads9412.
 
 
 ## Reproducible results
@@ -184,7 +183,20 @@ python3 main.py postprocess-lv-ES -n results/native -t results/transplanted -o f
 
 ## Citation
 If you use the code in this repository, please cite:
-TBW
+```bibtex
+@article{
+doi:10.1126/science.ads9412,
+author = {Giulio Ciucci  and Daniela Lorizio  and Nicoletta Bartoloni  and Mauricio Budini  and Andrea Colliva  and Simone Vodret  and Anh-Vu Nguyen  and Lorenzo Ciacci  and Bernhard Texler  and Benno Cardini  and Rupert Oberhuber  and Sofia Bindelli  and Ilaria Luciana Carlotta Del Giudice  and Roman Vuerich  and Francesco Riccitelli  and Elena Zago  and Henrik Nicolay Finsberg  and Mattia Chiesa  and Gianluca Lorenzo Perrucci  and Rossana Bussani  and Furio Silvestri  and Manuel Maglione  and Gaetano Ivan Dellino  and Gianfranco Sinagra  and Mauro Giacca  and Thomas Eschenhagen  and Paolo Golino  and Giulio Pompilio  and Pier Giuseppe Pelicci  and Laura Andolfi  and Maurizio Pinamonti  and Matteo Dal Ferro  and Samuel Wall  and Francesco S. Loffredo  and Serena Zacchigna },
+title = {Mechanical load inhibits cancer growth in mouse and human hearts},
+journal = {Science},
+volume = {392},
+number = {6796},
+pages = {eads9412},
+year = {2026},
+doi = {10.1126/science.ads9412},
+URL = {https://www.science.org/doi/abs/10.1126/science.ads9412},
+}
+```
 
 
 ## Author
